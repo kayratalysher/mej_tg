@@ -151,7 +151,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             );
         }
 
-        
+
     }
 
     private void handleCallbackQuery(Long chatId, Integer messageId, String callbackData, String callbackQueryId) {
