@@ -4,3 +4,4 @@
 Данный пример подробно разобран в статье: http://akutepov.ru/ru/blog/prostoi-telegram-bot-na-java-i-spring-boot/
 # mej_tg
 # mej_tg
+# mej_tg
