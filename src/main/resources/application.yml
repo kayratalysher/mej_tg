@@ -1,34 +1,11 @@
 spring:
   datasource:
-    url: jdbc:postgresql://5.35.104.138:9725/fintech
-    username: beta_sdf
-    password: zMpkRXGZvGbJXBhqusQdWA7LWHXez4iPDqnzcU7uVSe
+    url: jdbc:postgresql://104.248.39.82:5432/mangilikeldb
+    username: bot_user
+    password: bot_password
     driver-class-name: org.postgresql.Driver
     hikari:
-      schema: zhiger
-
-      services:
-        postgres:
-          image: postgres:15
-          container_name: postgres
-          restart: always
-          environment:
-            POSTGRES_DB: mangilikel
-            POSTGRES_USER: mangilikel
-            POSTGRES_PASSWORD: mangilikel
-          volumes:
-            - ./postgres/data:/var/lib/postgresql/data
-          ports:
-            - "5432:5432"
-        app:
-          image: your/app:latest
-          depends_on:
-            - postgres
-          environment:
-            SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mangilikel
-            SPRING_DATASOURCE_USERNAME: mangilikel
-            SPRING_DATASOURCE_PASSWORD: mangilikel
-
+      schema: test
   jpa:
     hibernate:
       ddl-auto: update
