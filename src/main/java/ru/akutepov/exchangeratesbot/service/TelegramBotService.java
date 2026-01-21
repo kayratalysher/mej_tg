@@ -4,907 +4,752 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.MessageEntity;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+import ru.akutepov.exchangeratesbot.adapter.DiplomGenerateAdapter;
 import ru.akutepov.exchangeratesbot.entity.ContestResult;
-import ru.akutepov.exchangeratesbot.entity.Contests;
+import ru.akutepov.exchangeratesbot.entity.ParticipantStatus;
 import ru.akutepov.exchangeratesbot.entity.Users;
 import ru.akutepov.exchangeratesbot.repositry.ContestResultRepository;
 import ru.akutepov.exchangeratesbot.repositry.UsersRepositroy;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpRequest.BodyPublishers;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.util.Map;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import org.telegram.telegrambots.meta.api.objects.Message;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-
+@Transactional
+@ConditionalOnProperty(name = "bot.enabled", havingValue = "true")
 public class TelegramBotService extends TelegramLongPollingBot {
 
-    @Value("${bot.username:}")
+    @Value("mangilik_el_jastary_mektep_bot")
     private String botUsername;
 
-    @Value("${bot.token:}")
+    @Value("8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM")
     private String botToken;
 
     private final UsersRepositroy usersRepositroy;
     private final ContestResultRepository contestResultRepository;
+    private final DiplomGenerateAdapter diplomGenerateAdapter;
 
-    // Храним, на каком шаге находится пользователь
-    private final java.util.Map<Long, Integer> userStep = new java.util.HashMap<>();
-    private final java.util.Map<Long, ContestResult> tempResults = new java.util.HashMap<>();
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private final Map<Long, Integer> userStep = new ConcurrentHashMap<>();
+    private final Map<Long, ContestResult> tempResults = new ConcurrentHashMap<>();
 
-
-
-    @PostConstruct
-    public void init() {
-        System.out.println("=== BOT INITIALIZATION STARTED ===");
-        System.out.println("Bot username from config: " + botUsername);
-        System.out.println("Bot token length: " + (botToken != null ? botToken.length() : "null"));
-
-        if (botToken == null || botToken.isEmpty() || botToken.equals("your_bot_token_here")) {
-            System.err.println("ERROR: Bot token is not configured!");
-            return;
-        }
-
-        if (botUsername == null || botUsername.isEmpty() || botUsername.equals("your_bot_username_here")) {
-            System.err.println("ERROR: Bot username is not configured!");
-            return;
-        }
-
-        try {
-            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(this);
-            System.out.println("✅ SUCCESS: Telegram Bot registered successfully!");
-            System.out.println("🤖 Bot: @" + botUsername);
-            System.out.println("📡 Bot is listening for messages...");
-
-            // Тестовая отправка сообщения себе (закомментируйте после теста)
-            // sendTestMessage();
-
-        } catch (TelegramApiException e) {
-            System.err.println("❌ ERROR registering bot: " + e.getMessage());
-            e.printStackTrace();
-        } catch (Exception e) {
-            System.err.println("❌ Unexpected error: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    // Метод для тестовой отправки сообщения (раскомментируйте для теста)
-    private void sendTestMessage() {
-        try {
-            SendMessage message = new SendMessage();
-            message.setChatId("YOUR_CHAT_ID"); // Замените на ваш chat_id
-            message.setText("🤖 Бот сәтті іске қосылды және жұмыс істеуге дайын!");
-            execute(message);
-            System.out.println("✅ Test message sent successfully!");
-        } catch (Exception e) {
-            System.err.println("❌ Error sending test message: " + e.getMessage());
-        }
-    }
-
-    @Transactional
-    public void createOrUpdateUser(Update update) {
-        if (update.getMessage() != null) {
-            var fromUser = update.getMessage().getFrom();
-
-            var userExis = usersRepositroy.findByUsername(fromUser.getUserName());
-            if (userExis.isPresent()) {
-                userExis.get().setLastSession(java.time.LocalDateTime.now());
-                usersRepositroy.save(userExis.get());
-                return;
-            }
+    // ====== SERVICE ONLY — NO BOT STARTUP HERE ======
 
 
-            usersRepositroy.save(Users.builder()
-                    .created(LocalDateTime.now())
-                    .email("")
-                    .fio(fromUser.getFirstName() + " " + fromUser.getLastName())
-                    .firstName(fromUser.getFirstName())
-                    .lastName(fromUser.getLastName())
-                    .username(fromUser.getUserName())
-                    .chatId(update.getMessage().getChatId())
-                    .build());
-        }
-
-
-    }
-
-
-    @Override
     public void onUpdateReceived(Update update) {
-        System.out.println("=== NEW UPDATE RECEIVED ===");
-        System.out.println("Update ID: " + update.getUpdateId());
+        if (update == null) return;
+
+        log.info("Update received: {}", update.getUpdateId());
+
         createOrUpdateUser(update);
-        if (update.getMessage()!=null && update.getMessage().hasText()) {
-            handleTextMessage(update.getMessage().getChatId(), update.getMessage().getText());
-        } else if (update.hasCallbackQuery()) {
+
+        if (update.hasMessage()) {
+            var message = update.getMessage();
+            Long chatId = message.getChatId();
+
+            if (message.hasText()) {
+                handleTextMessage(chatId, message.getText());
+            } else if (message.hasDocument()) {
+                handleFileMessage(chatId, message.getDocument().getFileId());
+            } else if (message.hasPhoto()) {
+                String fileId = message.getPhoto().get(message.getPhoto().size() - 1).getFileId();
+                handleFileMessage(chatId, fileId);
+            }
+        }
+
+        if (update.hasCallbackQuery()) {
+            var q = update.getCallbackQuery();
             handleCallbackQuery(
-                    update.getCallbackQuery().getMessage().getChatId(),
-                    update.getCallbackQuery().getMessage().getMessageId(),
-                    update.getCallbackQuery().getData(),
-                    update.getCallbackQuery().getId()
+                    q.getMessage().getChatId(),
+                    q.getMessage().getMessageId(),
+                    q.getData(),
+                    q.getId()
             );
         }
-
-
     }
 
-    private void handleCallbackQuery(Long chatId, Integer messageId, String callbackData, String callbackQueryId) {
-        System.out.println("Handling callback: " + callbackData + " from chat: " + chatId);
 
-        answerCallbackQuery(callbackQueryId);
-        switch (callbackData) {
-            case "main_menu":
-                sendWelcomeMessage(chatId);
-                break;
-            case "active_contests":
-                showActiveContests(chatId, messageId);
-                break;
-            case "contest_details_1":
-                showContestDetails(chatId, messageId, 1);
-                break;
-            case "contest_details_2":
-                showContestDetails(chatId, messageId, 2);
-                break;
-            case "contest_details_3":
-                showContestDetails(chatId, messageId, 3);
-                break;
-            case "participate_contest":
-                startParticipation(chatId);
-                break;
-            case "feedback":
-                showFeedbackOptions(chatId, messageId);
-                break;
-            case "contact_email":
-                showContactEmail(chatId, messageId);
-                break;
-            case "contact_phone":
-                showContactPhone(chatId, messageId);
-                break;
-            case "contact_social":
-                showSocialNetworks(chatId, messageId);
-                break;
-            case "download_contest_1":
-                sendContestFile(chatId, 1);
-                break;
-            case  "BUY_CERTIFICATE":
-                SendMessage paymentMessage = new SendMessage();
-                paymentMessage.setChatId(chatId.toString());
-                paymentMessage.setText("💳 Сіз сертификатты мына сілтеме арқылы сатып ала аласыз:\n" +
-                        "https://pay.kaspi.kz/pay/v0iq41rc\n\n" +
-                        "📸 Төлем жасаған соң, чекті осы чатқа жіберіңіз.\n" +
-                        "Біздің менеджер төлемді растағаннан кейін сіздің сертификатыңыз дайындалады ✅");
-                executeMessage(paymentMessage);
-                executeMessage(paymentMessage);
-                break;
+    public class HttpClientHelper {
 
-            case "DECLINE_CERTIFICATE":
-                SendMessage declineMessage = new SendMessage();
-                declineMessage.setChatId(chatId.toString());
-                declineMessage.setText("❌ Сатып алудан бас тарттыңыз.");
-                executeMessage(declineMessage);
-                break;
+        public static byte[] downloadFile(String url, Map<String, String> params) throws Exception {
+
+            StringBuilder query = new StringBuilder("?");
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                if (query.length() > 1) query.append("&");
+                query.append(URLEncoder.encode(entry.getKey(), StandardCharsets.UTF_8))
+                        .append("=")
+                        .append(URLEncoder.encode(entry.getValue(), StandardCharsets.UTF_8));
+            }
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url + query))
+                    .GET()
+                    .build();
+
+            HttpResponse<byte[]> response = HttpClient.newHttpClient()
+                    .send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Ошибка API: " + response.statusCode());
+            }
+
+            return response.body();
         }
+
+
     }
+
+    // ===================== USER =====================
+
+    private void createOrUpdateUser(Update update) {
+        if (update.getMessage() == null) return;
+
+        var from = update.getMessage().getFrom();
+
+        usersRepositroy.findByUsername(from.getUserName()).ifPresentOrElse(
+                user -> {
+                    user.setLastSession(LocalDateTime.now());
+                    usersRepositroy.save(user);
+                },
+                () -> usersRepositroy.save(
+                        Users.builder()
+                                .created(LocalDateTime.now())
+                                .email("")
+                                .fio(from.getFirstName() + " " + from.getLastName())
+                                .firstName(from.getFirstName())
+                                .lastName(from.getLastName())
+                                .username(from.getUserName())
+                                .chatId(update.getMessage().getChatId())
+                                .build()
+                )
+        );
+    }
+
+    // ===================== MESSAGES =====================
 
     private void handleTextMessage(Long chatId, String text) {
-        // Если пользователь в процессе заполнения
+
         if (userStep.containsKey(chatId)) {
             processUserInput(chatId, text);
             return;
         }
 
-        // Дальше старый код
         switch (text) {
-            case "/start":
-                sendWelcomeMessage(chatId);
-                break;
-            case "/help":
-                sendStartButton(chatId);
-                break;
-            default:
-                sendUnknownCommand(chatId);
+            case "/start" -> sendWelcomeMessage(chatId);
+            case "/help" -> sendText(chatId, "Команды: /start");
+            case "/test_channel" -> testChannel();
+            default -> sendText(chatId, "Неизвестная команда");
+        }
+    }
+    private void sendText(Long chatId, String text) {
+        try {
+            execute(new SendMessage(chatId.toString(), text));
+        } catch (Exception e) {
+            log.error("Send text error", e);
         }
     }
 
 
-    private void sendWelcomeMessage(Long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText("Сәлеметсіз бе, біз — Мәңгілік ел жастары командасымыз.\n" +
-                "Сізді не қызықтырады?");
+    private void showDiplomaButtons(Long chatId, Integer messageId, String data) {
 
-        InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        Long participantId = Long.parseLong(
+                data.replace("payment_ok_", "")
+        );
 
-        // Кнопка "Список активных конкурсов"
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton contestsButton = new InlineKeyboardButton();
-        contestsButton.setText("📋 Қазір өтіп жатқан байқаулар тізімі");
-        contestsButton.setCallbackData("active_contests");
-        row1.add(contestsButton);
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
+                List.of(button("🥇 1 дәрежелі", "set_diploma_1_" + participantId)),
+                List.of(button("🥈 2 дәрежелі", "set_diploma_2_" + participantId)),
+                List.of(button("🥉 3 дәрежелі", "set_diploma_3_" + participantId))
+        ));
 
-        // Кнопка "Обратная связь"
-        List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton feedbackButton = new InlineKeyboardButton();
-        feedbackButton.setText("📞 Кері байланыс");
-        feedbackButton.setCallbackData("feedback");
-        row2.add(feedbackButton);
+        EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
+        edit.setChatId(chatId.toString());
+        edit.setMessageId(messageId);
+        edit.setReplyMarkup(keyboard);
 
-        rows.add(row1);
-        rows.add(row2);
-
-        inlineKeyboard.setKeyboard(rows);
-        message.setReplyMarkup(inlineKeyboard);
-
-        executeMessage(message);
+        try {
+            execute(edit);
+        } catch (Exception e) {
+            log.error("Edit keyboard error", e);
+        }
     }
 
-    private void showActiveContests(Long chatId, Integer messageId) {
-        EditMessageText message = new EditMessageText();
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        message.setText("🏆 **Активные конкурсы:**\n\n" +
-                " \uD83C\uDFA4 *** I Республикалық “Ұлы арман” Махамбет оқулары***\n" +
-                " ІІІ Республикалық  «Оян, қазақ!» атты Міржақып оқулары\n" +
-                "Выберите конкурс для получения подробной информации:");
 
-        InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+    private void handleCallbackQuery(Long chatId, Integer messageId, String data, String callbackId) {
+        if (data.startsWith("payment_ok_")) {
+            showDiplomaButtons(chatId, messageId, data);
+            return;
+        }
 
-        // Кнопки для каждого конкурса
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton contest1 = new InlineKeyboardButton();
-        contest1.setText(" Махамбет оқулары");
-        contest1.setCallbackData("contest_details_1");
-        row1.add(contest1);
+        if (data.startsWith("payment_failed_")) {
+            Long id = Long.parseLong(data.replace("payment_failed_", ""));
+            handlePaymentFailed(id);
+            return;
+        }
+        answerCallbackQuery(callbackId);
 
-        List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton contest2 = new InlineKeyboardButton();
-        contest2.setText("«Оян, қазақ!»");
-        contest2.setCallbackData("contest_details_2");
-        row2.add(contest2);
+        switch (data) {
+            case "main_menu" -> sendWelcomeMessage(chatId);
+            case "active_contests" -> showActiveContests(chatId, messageId);
+            case "contest_details_1" -> showContestDetails(chatId, messageId, 1);
+            case "contest_details_2" -> showContestDetails(chatId, messageId, 2);
+            case "participate_contest" -> startParticipation(chatId);
+            case "download_contest_1" -> sendContestFile(chatId);
+        }
 
-        // Кнопка "Назад"
-        List<InlineKeyboardButton> row5 = new ArrayList<>();
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("⬅️ Назад");
-        backButton.setCallbackData("main_menu");
-        row5.add(backButton);
+        // Обработка выбора диплома
+        if (data.startsWith("set_diploma_")) {
+            handleSetDiploma(data);
+            return; // больше ничего не делаем для этого колбэка
+        }
 
-        rows.add(row1);
-        rows.add(row2);
+        if (data.startsWith("certificate_paid_")) {
+            Long id = Long.parseLong(data.replace("certificate_paid_", ""));
+            handleCertificatePaidById(id);
+            return;
+        }
 
-        rows.add(row5);
-
-        inlineKeyboard.setKeyboard(rows);
-        message.setReplyMarkup(inlineKeyboard);
-        message.enableMarkdown(true);
-
-        executeEditMessage(message);
+        if (data.startsWith("certificate_reject_")) {
+            Long id = Long.parseLong(data.replace("certificate_reject_", ""));
+            handleRejectById(id);
+            return;
+        }
     }
 
+    private void handlePaymentFailed(Long id) {
+        ContestResult r = contestResultRepository.findById(id).orElse(null);
+        if (r == null) return;
+
+        // меняем статус (можно REJECTED или новый)
+        r.setStatus(ParticipantStatus.REJECTED);
+        contestResultRepository.save(r);
+
+        // обновляем сообщение в группе (убираем кнопки)
+        updateGroupMessage(r);
+
+        // ❗ сообщение пользователю
+        sendText(
+                r.getChatId(),
+                "❌ Төлем өтпеді.\n\n" +
+                        "Мүмкін қате болды немесе төлем расталмады.\n" +
+                        "Қайта төлем жасап көріңіз немесе администраторға хабарласыңыз 🙏"
+        );
+    }
+
+
+    private void handleCertificatePaidById(Long id) {
+        ContestResult r = contestResultRepository.findById(id).orElse(null);
+        if (r == null) return;
+
+        r.setStatus(ParticipantStatus.PAID_PENDING);
+        contestResultRepository.save(r);
+
+        updateGroupMessage(r);
+
+        sendText(r.getChatId(),
+                "⏳ Төлем қабылданды.\n" +
+                        "Тексерілген соң сертификат жіберіледі 📜");
+    }
+
+    private void handleRejectById(Long id) {
+        ContestResult r = contestResultRepository.findById(id).orElse(null);
+        if (r == null) return;
+
+        r.setStatus(ParticipantStatus.REJECTED);
+        contestResultRepository.save(r);
+
+        updateGroupMessage(r);
+        sendText(r.getChatId(), "Жарайды 👍 Егер ойыңыз өзгерсе — хабарласыңыз");
+    }
+
+    private void handleSetDiploma(String data) {
+        // data = set_diploma_1_123
+        String[] parts = data.split("_");
+        int diplomaCategory = Integer.parseInt(parts[2]);
+        Long participantId = Long.parseLong(parts[3]);
+
+        contestResultRepository.findById(participantId).ifPresent(r -> {
+            r.setDiplomaCategory(diplomaCategory); // сохраняем категорию
+            contestResultRepository.save(r);
+
+            // Запрос сертификата через API
+            fetchAndSendCertificate(r);
+        });
+    }
+    private int resolveScoreByDiploma(int diplomaCategory) {
+        return switch (diplomaCategory) {
+            case 1 -> 100;
+            case 2 -> 70;
+            case 3 -> 50;
+            default -> 0;
+        };
+    }
+
+    private void fetchAndSendCertificate(ContestResult r) {
+        try {
+            String typeHandler=r.getDiplomaCategory() ==1 ? null : r.getDiplomaCategory()==2 ? "SECOND" : "THIRD";
+            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),typeHandler,60);
+
+            if (diplomaBytes == null || diplomaBytes.length == 0) {
+                throw new RuntimeException("Диплом пришёл пустой");
+            }
+
+            InputStream certificateStream = new ByteArrayInputStream(diplomaBytes);
+
+            execute(new SendDocument(
+                    r.getChatId().toString(),
+                    new InputFile(certificateStream, "diplom.pdf")
+            ));
+            //диплом руководителю
+            String typeHandlerHead=r.getDiplomaCategory() ==1 ? null : r.getDiplomaCategory()==2 ? "SECOND" : "THIRD";
+            byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiploma(r.getMentor(),typeHandler,60);
+
+            if (diplomaBytesHead == null || diplomaBytesHead.length == 0) {
+                throw new RuntimeException("Диплом пришёл пустой");
+            }
+
+            InputStream certificateStreamHead = new ByteArrayInputStream(diplomaBytesHead);
+
+            execute(new SendDocument(
+                    r.getChatId().toString(),
+                    new InputFile(certificateStreamHead, "algys_xat.pdf")
+            ));
+
+            sendText(r.getChatId(), "📜 Диплом дайын!");
+
+            // меняем статус
+            r.setStatus(ParticipantStatus.APPROVED);
+            contestResultRepository.save(r);
+
+            // убираем кнопки в группе
+            if (r.getChannelMessageId() != null) {
+                EditMessageText edit = new EditMessageText();
+                edit.setChatId("-1003235201523");
+                edit.setMessageId(r.getChannelMessageId());
+                edit.setText(buildGroupText(r));
+                edit.setReplyMarkup(null);
+                execute(edit);
+            }
+
+        } catch (Exception e) {
+            log.error("❌ Diploma download error", e);
+            sendText(r.getChatId(), "❌ Диплом жүктелмеді, кейінірек қайталап көріңіз");
+        }
+    }
+
+    private void testChannel() {
+        try {
+            Message m = execute(
+                    new SendMessage("-1003235201523", "TEST CHANNEL MESSAGE")
+            );
+            log.error("🧪 TEST SENT, messageId={}", m.getMessageId());
+        } catch (Exception e) {
+            log.error("🧪 TEST FAILED", e);
+        }
+    }
 
     private void showContestDetails(Long chatId, Integer messageId, int contestId) {
-        String contestText = "";
-        String contestTitle = "";
 
-        switch (contestId) {
-            case 1:
-                contestTitle = "І Республикалық  «Ұлы арман» атты Махамбет оқулары";
-                contestText = """
-                📚 Құрметті ұстаздар мен оқушылар!
-                
-                “MÁŃGILIK EL JASTARY” қоғамдық қорының ұйымдастыруымен
-                🎤 I Республикалық “Ұлы арман” Махамбет оқулары басталды!
-                
-                📅 Жұмыстарды жолдау тегін, қабылдау – 10 қараша 2025 жылға дейін (онлайн).
-                
-                🎁 Марапаттар:
-                🏅 I, II, III орындар — дипломдар
-                📜 10 жетекші — Құрмет грамотасы
-                🌟 Үздік оқушылар — Алматыдағы марапаттау кешіне шақырылады
-                
-                📞 Ақпарат: +7 (777) 465 25 94
-                
-                ✨ Байқауға белсенді қатысыңыз!
-                """;
-                break;
+        // 1) редактируем старое сообщение, чтобы убрать меню
+        EditMessageText progress = new EditMessageText();
+        progress.setChatId(chatId.toString());
+        progress.setMessageId(messageId);
+        progress.setText("Жүктелуде...");
+        executeEditMessage(progress);
 
-            case 2:
-                contestTitle = "ІІІ Республикалық «Оян, қазақ!» атты Міржақып оқулары";
-                contestText = """
-                **ІІІ Республикалық «Оян, қазақ!» атты Міржақып оқулары**
+        // 2) Подгружаем афишу
+        InputStream imageStream = getClass().getClassLoader()
+                .getResourceAsStream("files/mukagali.jpg");
 
-                **Сипаттама:**
-                Міржақып Дулатұлының мұрасына арналған әдеби байқау.
-
-                **Өткізу мерзімі:**
-                📅 1 қараша - 20 желтоқсан 2024 жыл
-
-                **Марапаттар:**
-                🏅 1-3 орындар — дипломдар және құнды сыйлықтар
-                📜 Үздік жұмыстар — жинақта басылу мүмкіндігі
-                """;
-                break;
-
-            case 3:
-                contestTitle = "✍️ Литературный конкурс";
-                contestText = """
-                **✍️ Литературный конкурс**
-
-                **Описание:**
-                Конкурс для молодых писателей и поэтов. Принимаются рассказы, стихи и эссе.
-
-                **Сроки проведения:**
-                📅 1 ноября - 31 декабря 2024 года
-
-                **Призы:**
-                🏅 Публикация в литературном сборнике
-                🥈 Участие в творческом семинаре
-                🥉 Книжные призы
-
-                **Темы:**
-                • Будущее Казахстана
-                • Семейные ценности
-                • Природа и экология
-                """;
-                break;
+        if (imageStream == null) {
+            sendText(chatId, "❌ Афиша табылмады");
+            return;
         }
 
-        // 1️⃣ Отправляем баннер
-        sendContestImage(chatId);
+        String caption =
+                "📘 МАҚАТАЕВ ОҚУЛАРЫ\n\n" +
+                        "МҰҚАҒАЛИ МАҚАТАЕВТЫҢ ТУҒАНЫНА  95 ЖЫЛ ТОЛУЫНА ОРАЙ ӨТКІЗІЛЕТІН\n\n" +
+                        "• Барлық қатысушыларға «MÁŃGLIK EL JASTARY»қоғамдық қорының арнайы лауреаттық дипломдары беріледі.\n" +
+                        "• Шәкірт дайындаған жетекшілерге «Алғыс хат»табысталады.\n" +
+                        "• Үздік деп танылған 100 оқушыға брендталған «Premium» бокс беріледі.\n\n" +
+                        "“Бас жүлде” бір жылға шәкіртақы!\n" +
+                        "Жетекшісіне “Құрмет грамотасы”\n" +
+                        "“Бас жүлде” бір жылға шәкіртақы!\n" +
+                        "“МҰҚАҒАЛИ МАҚАТАЕВ 95 жыл” медалі мен куәлігі салтанатты түрде табысталады.\n" +
+                        "Оқушылар мен жетекшілерге Алматы қаласының танымдық жерлеріне  саяхат.\n\n" +
+                        "Қатысу үшін басыңыз:";
 
-        // 2️⃣ Отправляем файл (если есть)
-        sendContestFile(chatId, contestId);
+        SendPhoto photo = new SendPhoto();
+        photo.setChatId(chatId.toString());
+        photo.setPhoto(new InputFile(imageStream, "mukagali.jpg"));
+        photo.setCaption(caption);
 
-        // 3️⃣ Отправляем текст с кнопками
-        SendMessage textMessage = new SendMessage();
-        textMessage.setChatId(chatId.toString());
-        textMessage.setText(contestText);
-        textMessage.enableMarkdown(true);
+        // 3) Добавляем кнопки
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
+                List.of(button("✅ Қатысу", "participate_contest")),
+                List.of(button("📄 Ереже", "download_contest_1")),
+                List.of(button("⬅ Артқа", "active_contests"))
+        ));
+        photo.setReplyMarkup(keyboard);
 
-        InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        // Кнопка "Участвовать"
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton participate = new InlineKeyboardButton();
-        participate.setText("✅ Байқауға қатысу");
-        participate.setCallbackData("participate_contest");
-
-        row1.add(participate);
-        rows.add(row1);
-
-        // Кнопка "Скачать положение" (только для конкурса 1)
-        if (contestId == 1) {
-            List<InlineKeyboardButton> row2 = new ArrayList<>();
-            InlineKeyboardButton downloadButton = new InlineKeyboardButton();
-            downloadButton.setText("📥 Ережені жүктеу");
-            downloadButton.setCallbackData("download_contest_1");
-            row2.add(downloadButton);
-            rows.add(row2);
-        }
-
-        // Кнопка "Назад к списку"
-        List<InlineKeyboardButton> rowBack = new ArrayList<>();
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("⬅️ Байқаулар тізіміне оралу");
-        backButton.setCallbackData("active_contests");
-        rowBack.add(backButton);
-        rows.add(rowBack);
-
-        inlineKeyboard.setKeyboard(rows);
-        textMessage.setReplyMarkup(inlineKeyboard);
-
+        // 4) Отправляем афишу + кнопки
         try {
-            execute(textMessage);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private void sendContestImage(Long chatId) {
-        try {
-            SendPhoto photo = new SendPhoto();
-            photo.setChatId(chatId.toString());
-            photo.setCaption("🎨 Махамбет оқулары - Баннер");
-
-            // Загрузка изображения из ресурсов
-            InputStream imageStream = getClass().getClassLoader()
-                    .getResourceAsStream("files/Маханбет.jpg");
-
-            if (imageStream != null) {
-                InputFile imageFile = new InputFile(imageStream, "makhambet_contest.jpg");
-                photo.setPhoto(imageFile);
-                execute(photo);
-                System.out.println("✅ Изображение отправлено успешно");
-            } else {
-                System.err.println("❌ Файл изображения не найден в ресурсах: files/Маханбет.jpg");
-                // Отправляем сообщение об ошибке
-                SendMessage errorMessage = new SendMessage();
-                errorMessage.setChatId(chatId.toString());
-                errorMessage.setText("❌ Изображение временно недоступно.");
-                executeMessage(errorMessage);
-            }
-
+            execute(photo);
         } catch (Exception e) {
-            System.err.println("❌ Ошибка при отправке изображения: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Send photo error", e);
         }
     }
 
-    private void sendContestFile(Long chatId, int contestId) {
-        try {
-            SendDocument document = new SendDocument();
-            document.setChatId(chatId.toString());
-            document.setCaption("📄 Махамбет оқулары - Ережелер\n\n" +
-                    "Бұл құжатта сіз таба аласыз:\n" +
-                    "• Байқауға қатысу шарттары\n" +
-                    "• Жұмыстарды тапсыру тәртібі\n" +
-                    "• Бағалау критерийлері\n" +
-                    "• Өтініш формасы");
 
-            // Загрузка файла из ресурсов
-            InputStream fileStream = getClass().getClassLoader()
-                    .getResourceAsStream("files/МАХАМБЕТ ОҚУЛАРЫ ереже.docx");
-
-            if (fileStream != null) {
-                InputFile documentFile = new InputFile(fileStream, "makhambet_oregeler.docx");
-                document.setDocument(documentFile);
-                execute(document);
-                System.out.println("✅ Файл отправлен успешно");
-            } else {
-                System.err.println("❌ Файл документа не найден в ресурсах: files/МАХАМБЕТ ОҚУЛАРЫ ереже.docx");
-                // Отправляем сообщение об ошибке
-                SendMessage errorMessage = new SendMessage();
-                errorMessage.setChatId(chatId.toString());
-                errorMessage.setText("❌ Документ временно недоступен.");
-                executeMessage(errorMessage);
-            }
-
-        } catch (Exception e) {
-            System.err.println("❌ Ошибка при отправке файла: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    private void sendContestFileFromResources(Long chatId, int contestId) {
-        try {
-            SendDocument document = new SendDocument();
-            document.setChatId(chatId.toString());
-            document.setCaption("📄 Положение о конкурсе молодых талантов");
-
-            // Чтение файла из ресурсов
-            InputStream fileStream = getClass().getClassLoader()
-                    .getResourceAsStream("documents/contest_1_regulations.pdf");
-
-            if (fileStream != null) {
-                document.setDocument(new InputFile(fileStream, "contest_regulations.pdf"));
-                execute(document);
-            } else {
-                // Если файл не найден в ресурсах
-                SendMessage errorMessage = new SendMessage();
-                errorMessage.setChatId(chatId.toString());
-                errorMessage.setText("❌ Файл временно недоступен. Пожалуйста, попробуйте позже.");
-                executeMessage(errorMessage);
-            }
-
-        } catch (Exception e) {
-            System.err.println("Ошибка при отправке файла из ресурсов: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
+    // ===================== PARTICIPATION =====================
 
     private void startParticipation(Long chatId) {
         userStep.put(chatId, 1);
         tempResults.put(chatId, new ContestResult());
-        sendText(chatId, "Атыңыз-жөніңізді жазыңыз:");
+        sendText(chatId, "Атыңыз-жөніңіз:");
     }
 
     private void processUserInput(Long chatId, String text) {
-        Integer step = userStep.get(chatId);
-        if (step == null) return;
-
         ContestResult result = tempResults.get(chatId);
+        Integer step = userStep.get(chatId);
+
+        if (result == null || step == null) return;
 
         switch (step) {
-            case 1 -> {
-                result.setFullName(text);
-                sendText(chatId, "Сыныбыңызды жазыңыз:");
-                userStep.put(chatId, 2);
-            }
-            case 2 -> {
-                result.setGrade(text);
-                sendText(chatId, "Ұялы телефоныңыз:");
-                userStep.put(chatId, 3);
-            }
-            case 3 -> {
-                result.setPhone(text);
-                sendText(chatId, "Жетекшіңіздің аты-жөні:");
-                userStep.put(chatId, 4);
-            }
-            case 4 -> {
-                result.setMentor(text);
-                sendText(chatId, "Мектебіңіз:");
-                userStep.put(chatId, 5);
-            }
+            case 1 -> { result.setFullName(text); userStep.put(chatId, 2); sendText(chatId, "Сыныбыңыз:"); }
+            case 2 -> { result.setGrade(text); userStep.put(chatId, 3); sendText(chatId, "Телефон:"); }
+            case 3 -> { result.setPhone(text); userStep.put(chatId, 4); sendText(chatId, "Жетекші аты:"); }
+            case 4 -> { result.setMentor(text); userStep.put(chatId, 5); sendText(chatId, "Мектеп:"); }
             case 5 -> {
                 result.setSchool(text);
-                sendText(chatId, "Жұмысыңызды сипаттаңыз (мысалы, шығарма, сурет, видео т.б.):");
-                userStep.put(chatId, 6);
+                userStep.put(chatId, 6);  // бот ждёт файл
+                sendText(chatId, "Жұмысыңызды жіберіңіз (файл түрінде):");
+                // НЕ сохраняем в БД на этом шаге
             }
             case 6 -> {
-                result.setWorkDescription(text);
-                result.setChatId(chatId);
+                sendText(chatId, "Жұмысыңызды жіберіңіз (файл түрінде):");
+            }
+        }
+    }
+
+    private void handleFileMessage(Long chatId, String fileId) {
+        Integer step = userStep.get(chatId);
+        ContestResult result = tempResults.get(chatId);
+
+        if (step == null || result == null) return;
+
+        if (step == 6) {
+            try {
+                // Получаем файл
+                var file = execute(new org.telegram.telegrambots.meta.api.methods.GetFile(fileId));
+                String fileUrl = "https://api.telegram.org/file/bot" + botToken + "/" + file.getFilePath();
+
+                String originalFileName = file.getFilePath();
+                String extension = "dat";
+                int dotIndex = originalFileName.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    extension = originalFileName.substring(dotIndex + 1);
+                }
+                String savedFileName = result.getFullName().replaceAll("\\s+", "_") + "_work." + extension;
+
+                // Сохраняем в объекте
+                result.setWorkFileId(fileId);
+                result.setWorkFileName(savedFileName);
                 result.setCreatedAt(LocalDateTime.now());
+                result.setChatId(chatId);
+                result.setStatus(ParticipantStatus.NEW);
 
-                contestResultRepository.save(result);
-                sendContestResultToChannel(result);
-                //запуск таймера
-                scheduleCertificateMessage(chatId);
+                // Сохраняем результат
+                ContestResult saved = contestResultRepository.save(result);
 
+                // 🔹 Отправка файла в канал
+                SendDocument sendDoc = new SendDocument();
+                sendDoc.setChatId("-1003235201523");
+                sendDoc.setDocument(new InputFile(new java.net.URL(fileUrl).openStream(), savedFileName));
+                execute(sendDoc);
 
-                sendText(chatId, """
-                    ✅ Рахмет!
-                    Сіздің мәліметіңіз сәтті қабылданды.
-                    Біз жақында сізбен хабарласамыз.
-                    """);
+                // 🔹 Отправка отдельного текстового сообщения с кнопками
+                SendMessage msg = new SendMessage("-1003235201523", buildGroupText(saved));
+                Message textMessage = execute(msg);
+
+                saved.setChannelMessageId(textMessage.getMessageId());
+                contestResultRepository.save(saved);
+
+                // Подтверждение участнику
+                sendText(chatId, "✅ Мәлімет сақталды, рахмет!");
+                sendText(chatId, "✔ Жұмысыңыз қабылданды!\n📜 Сертификат 2–3 сағат ішінде дайын болады.");
+
+                startCertificateTimer(saved.getId(), chatId);
 
                 userStep.remove(chatId);
                 tempResults.remove(chatId);
+
+            } catch (Exception e) {
+                log.error("File send to channel error", e);
+                sendText(chatId, "❌ Жұмысыңызды жіберу кезінде қате пайда болды, кейінірек қайта көріңіз.");
             }
         }
     }
 
-    private void sendText(Long chatId, String text) {
-        SendMessage message = new SendMessage(chatId.toString(), text);
-        executeMessage(message);
-    }
 
-    private void sendContestResultToChannel(ContestResult result) {
-        Long channelId = -1003235201523L;  // ID твоего канала
-
-        String text = "📢 *Жаңа қатысушы тіркелді!*\n\n" +
-                "👤 *Аты-жөні:* " + result.getFullName() + "\n" +
-                "🏫 *Мектебі:* " + result.getSchool() + "\n" +
-                "📚 *Сыныбы:* " + result.getGrade() + "\n" +
-                "📞 *Ұялы телефон:* " + result.getPhone() + "\n" +
-                "👩‍🏫 *Жетекшісі:* " + result.getmentor() + "\n" +
-                "📝 *Жұмысы:* " + result.getWorkDescription() + "\n\n" +
-                "📅 Уақыты: " + LocalDateTime.now();
-
-        SendMessage message = new SendMessage();
-        message.setChatId(channelId.toString());
-        //message.setChatId("@Работы участников (Мәңгілк ел жастары)");
-        message.setText(text);
-        message.enableMarkdown(true);
+    private void sendContestResultToChannelTextOnly(ContestResult r) {
+        SendMessage msg = new SendMessage();
+        msg.setChatId("-1003235201523");
+        msg.setText(buildGroupText(r));
 
         try {
-            execute(message);
+            Message sent = execute(msg);
+            if (sent != null) {
+                r.setChannelMessageId(sent.getMessageId());
+                contestResultRepository.save(r);
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Send text to channel error", e);
         }
     }
 
+    private InputStream fileIdToInputStream(String fileId) throws Exception {
+        var file = execute(new org.telegram.telegrambots.meta.api.methods.GetFile(fileId));
+        var fileUrl = "https://api.telegram.org/file/bot" + botToken + "/" + file.getFilePath();
+        return new java.net.URL(fileUrl).openStream();
+    }
 
-    private void scheduleCertificateMessage(Long chatId) {
-        Runnable task = () -> {
-            SendMessage message = new SendMessage();
-            message.setChatId(chatId.toString());
-            message.setText("🎉 Құттықтаймыз! Сіздің сертификатыңыз дайын ✅\n\n" +
-                    "📜 Сертификатты алу үшін біздің сайтқа кіріңіз немесе хабарласыңыз: +7 777 123 4567");
 
-            // Создание кнопок
-            InlineKeyboardMarkup keyboardMarkup = new InlineKeyboardMarkup();
 
-            InlineKeyboardButton buyButton = new InlineKeyboardButton();
-            buyButton.setText("Сатып алу"); // Кнопка "Купить сертификат"
-            buyButton.setCallbackData("BUY_CERTIFICATE"); // Callback data при нажатии
+    private final ScheduledExecutorService scheduler =
+            Executors.newScheduledThreadPool(1);
 
-            InlineKeyboardButton declineButton = new InlineKeyboardButton();
-            declineButton.setText("Бас тарту"); // Кнопка "Отказаться от покупки"
-            declineButton.setCallbackData("DECLINE_CERTIFICATE");
+    private void startCertificateTimer(Long contestResultId, Long chatId){
+        scheduler.schedule(() -> {
 
-            // Добавляем кнопки в одну строку
-            List<InlineKeyboardButton> row = new ArrayList<>();
-            row.add(buyButton);
-            row.add(declineButton);
+            SendMessage msg = new SendMessage();
+            msg.setChatId(chatId.toString());
+            msg.setText(
+                    "📜 Сертификат дайын!\n\n" +
+                            "Егер сертификатты алғыңыз келсе,\n" +
+                            "төлем жасап сатып ала аласыз \n" +
+                            "төлем жасаганда комментриге " + contestResultId +
+                            " санын жіберуіңізді сураймыз 👇"
+            );
+            //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
+            String payUrl = "https://pay.kaspi.kz/pay/v0iq41rc";
 
-            List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-            rows.add(row);
+            InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
+                    List.of(payUrlButton("💳 Сертификатты төлеу", payUrl)),
+                    List.of(callbackButton(
+                            "✅ Сертификат төленді",
+                            "certificate_paid_" + contestResultId
+                    )),
+                    List.of(callbackButton(
+                            "❌ Бас тарту",
+                            "certificate_reject_" + contestResultId
+                    ))
+            ));
 
-            keyboardMarkup.setKeyboard(rows);
-            message.setReplyMarkup(keyboardMarkup);
+            msg.setReplyMarkup(keyboard);
+            executeMessage(msg);
 
-            try {
-                execute(message);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+        }, 1, TimeUnit.MINUTES);
+    }
+
+    private void updateGroupMessage(ContestResult r) {
+        if (r == null || r.getId() == null) return;
+
+        ContestResult fresh = contestResultRepository.findById(r.getId()).orElse(null);
+        if (fresh == null || fresh.getChannelMessageId() == null) return;
+
+        log.info("⚠ updateGroupMessage: channelMessageId={}", fresh.getChannelMessageId());
+
+        try {
+            switch (fresh.getStatus()) {
+
+                case PAID_PENDING -> {
+                    // ✅ меняем ТОЛЬКО кнопки
+                    InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
+                            List.of(
+                                    button("💳 Оплата прошла", "payment_ok_" + fresh.getId()),
+                                    button("❌ Оплата не прошла", "payment_failed_" + fresh.getId())
+                            )
+                    ));
+
+                    EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
+                    edit.setChatId("-1003235201523");
+                    edit.setMessageId(fresh.getChannelMessageId());
+                    edit.setReplyMarkup(keyboard);
+
+                    execute(edit);
+                    log.info("✅ GROUP KEYBOARD UPDATED (PAID_PENDING)");
+                }
+
+                case REJECTED -> {
+                    // ✅ меняем текст и убираем кнопки
+                    EditMessageText edit = new EditMessageText();
+                    edit.setChatId("-1003235201523");
+                    edit.setMessageId(fresh.getChannelMessageId());
+                    edit.setText(buildGroupText(fresh));
+                    edit.setReplyMarkup(null);
+
+                    execute(edit);
+                    log.info("✅ GROUP MESSAGE UPDATED (REJECTED)");
+                }
+
+                default -> {
+                    // ничего не делаем
+                }
             }
+        } catch (Exception e) {
+            log.error("❌ updateGroupMessage FAILED", e);
+        }
+    }
+
+    private InlineKeyboardButton payUrlButton(String text, String url) {
+        InlineKeyboardButton b = new InlineKeyboardButton(text);
+        b.setText(text);
+        b.setUrl(url); // ⚠️ именно URL, не callback
+        return b;
+    }
+
+    private InlineKeyboardButton callbackButton(String text, String data) {
+        InlineKeyboardButton b = new InlineKeyboardButton();
+        b.setText(text);
+        b.setCallbackData(data);
+        return b;
+    }
+
+    // ===================== FILE =====================
+
+    private void sendContestFile(Long chatId) {
+        try (InputStream fileStream = getClass().getClassLoader()
+                .getResourceAsStream("files/Мақатаев оқулары мектеп.docx")) {
+
+            if (fileStream == null) {
+                sendText(chatId, "❌ Файл табылмады");
+                return;
+            }
+
+            execute(new SendDocument(chatId.toString(),
+                    new InputFile(fileStream, "makataev_rules.docx")));
+
+        } catch (Exception e) {
+            log.error("File send error", e);
+        }
+    }
+
+
+
+    // ===================== UI HELPERS =====================
+
+    private void sendWelcomeMessage(Long chatId) {
+        SendMessage msg = new SendMessage(chatId.toString(),
+                "Сәлеметсіз бе! " +
+                        "\uD83C\uDFC6 Өтіп жатқан байкаулар:\n" +
+                        "\n" +
+                        " \uD83C\uDFA4  МАҚАТАЕВ ОҚУЛАРЫ \n" +
+                        "\n" +
+                        "Толықырақ білу үшін байқауды таңдаңыз:");
+
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
+                List.of(button("📋 Байқаулар", "active_contests"))
+        ));
+
+        msg.setReplyMarkup(keyboard);
+        executeMessage(msg);
+    }
+
+    private void showActiveContests(Long chatId, Integer messageId) {
+        EditMessageText msg = new EditMessageText();
+        msg.setChatId(chatId.toString());
+        msg.setMessageId(messageId);
+        msg.setText("Байқаулар тізімі:");
+
+        msg.setReplyMarkup(new InlineKeyboardMarkup(List.of(
+                List.of(button("МАҚАТАЕВ ОҚУЛАРЫ", "contest_details_1"))
+        )));
+
+        executeEditMessage(msg);
+    }
+
+    private InlineKeyboardButton button(String text, String data) {
+        InlineKeyboardButton b = new InlineKeyboardButton(text);
+        b.setCallbackData(data);
+        return b;
+    }
+
+    // ===================== UTILS =====================
+
+    private void answerCallbackQuery(String id) {
+        try { execute(new AnswerCallbackQuery(id)); }
+        catch (Exception e) { log.error("Callback reply error", e); }
+    }
+
+    private void executeMessage(SendMessage msg) {
+        try { execute(msg); }
+        catch (Exception e) { log.error("Message error", e); }
+    }
+
+    private void executeEditMessage(EditMessageText msg) {
+        try { execute(msg); }
+        catch (Exception e) { log.error("Edit error", e); }
+    }
+
+    private String statusText(ParticipantStatus status) {
+        return switch (status) {
+            case NEW -> "🆕 Жаңа қатысушы";
+            case WANT_TO_BUY -> "🛒 Сертификат алғысы келеді";
+            case PAID_PENDING -> "⏳ Төлем тексерілуде";
+            case APPROVED -> "✅ Төлем расталды";
+            case REJECTED -> "❌ Бас тартты";
         };
-
-        // Отправить сообщение через 5 минут
-        scheduler.schedule(task, 5, TimeUnit.MINUTES);
     }
 
-
-
-
-    private void showParticipationInfo(Long chatId, Integer messageId) {
-        EditMessageText message = new EditMessageText();
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        message.setText("**📝 Байқауға қалай қатысуға болады:**\n\n" +
-                "1. **Қолайлы байқауды таңдаңыз**\n" +
-                "2. **Жұмысты дайындаңыз** талаптарға сәйкес\n" +
-                "3. **Өтінімді толтырыңыз**\n" +
-                "4. **Материалдарды жіберіңіз** қабылдау мерзімінен бұрын\n\n" +
-                "**Сұрақтар бойынша байланыс:**\n" +
-                "📧 konkurs@manglik-el.kz\n" +
-                "📞 +7 777 123 4567\n\n" +
-                "Сіздің шығармашылығыңызды асыға күтеміз! 🎉");
-
-        InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        // Кнопка "Назад"
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("⬅️ Байқауларға оралу");
-        backButton.setCallbackData("active_contests");
-        row1.add(backButton);
-
-        rows.add(row1);
-
-        inlineKeyboard.setKeyboard(rows);
-        message.setReplyMarkup(inlineKeyboard);
-        message.enableMarkdown(true);
-
-        executeEditMessage(message);
+    private String buildGroupText(ContestResult r) {
+        return
+                "📢 Жаңа қатысушы\n\n" +
+                        "ID: " + r.getId() + "\n" +
+                        "👤 " + r.getFullName() + "\n" +
+                        "🏫 " + r.getSchool() + "\n" +
+                        "📚 " + r.getGrade() + "\n" +
+                        "📞 " + r.getPhone() + "\n" +
+                        "👩‍🏫 " + r.getMentor() + "\n\n" +
+                        "📌 Статус: " + statusText(r.getStatus());
     }
 
-    private void showFeedbackOptions(Long chatId, Integer messageId) {
-        EditMessageText message = new EditMessageText();
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        message.setText("**📞 Кері байланыс**\n\n" +
-                "Сұрақтар, ұсыныстар немесе пікірлеріңізді бөлісуге әрдайым дайынбыз!\n\n" +
-                "Қолайлы байланыс тәсілін таңдаңыз:");
-
-        InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        // Кнопка Email
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton emailButton = new InlineKeyboardButton();
-        emailButton.setText("📧 Email");
-        emailButton.setCallbackData("contact_email");
-        row1.add(emailButton);
-
-        // Кнопка Телефон
-        List<InlineKeyboardButton> row2 = new ArrayList<>();
-        InlineKeyboardButton phoneButton = new InlineKeyboardButton();
-        phoneButton.setText("📞 Телефон");
-        phoneButton.setCallbackData("contact_phone");
-        row2.add(phoneButton);
-
-        // Кнопка Соцсети
-        List<InlineKeyboardButton> row3 = new ArrayList<>();
-        InlineKeyboardButton socialButton = new InlineKeyboardButton();
-        socialButton.setText("🌐 Әлеуметтік желілер");
-        socialButton.setCallbackData("contact_social");
-        row3.add(socialButton);
-
-        // Кнопка "Назад"
-        List<InlineKeyboardButton> row4 = new ArrayList<>();
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("⬅️ Басты менюге қайту");
-        backButton.setCallbackData("main_menu");
-        row4.add(backButton);
-
-        rows.add(row1);
-        rows.add(row2);
-        rows.add(row3);
-        rows.add(row4);
-
-        inlineKeyboard.setKeyboard(rows);
-        message.setReplyMarkup(inlineKeyboard);
-        message.enableMarkdown(true);
-
-        executeEditMessage(message);
-    }
-
-    private void showContactEmail(Long chatId, Integer messageId) {
-        EditMessageText message = new EditMessageText();
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        message.setText("**📧 Электрондық пошта:**\n\n" +
-                "Жалпы сұрақтар үшін:\n" +
-                "📧 info@manglik-el.kz\n\n" +
-                "Байқаулар бойынша:\n" +
-                "📧 konkurs@manglik-el.kz\n\n" +
-                "Серіктестік бойынша:\n" +
-                "📧 partnership@manglik-el.kz\n\n" +
-                "24 сағат ішінде жауап береміз!");
-
-        addBackToFeedbackKeyboard(message);
-        executeEditMessage(message);
-    }
-
-    private void showContactPhone(Long chatId, Integer messageId) {
-        EditMessageText message = new EditMessageText();
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        // Телефон
-        message.setText("**📞 Телефон нөмірлері:**\n\n" +
-                "Жалпы ақпарат:\n" +
-                "📞 +7 7172 123 456\n\n" +
-                "Байқаулар бөлімі:\n" +
-                "📞 +7 777 123 4567\n\n" +
-                "Жұмыс уақыты:\n" +
-                "🕒 Дс-Пт: 9:00-18:00\n" +
-                "🕒 Сен: 10:00-16:00\n" +
-                "🌅 Жк: демалыс");
-
-        addBackToFeedbackKeyboard(message);
-        executeEditMessage(message);
-    }
-
-    private void showSocialNetworks(Long chatId, Integer messageId) {
-        EditMessageText message = new EditMessageText();
-        message.setChatId(chatId.toString());
-        message.setMessageId(messageId);
-        message.setText("**🌐 Біз әлеуметтік желілерде:**\n\n" +
-                "Instagram:\n" +
-                "📷 @manglik_el_jastary\n\n" +
-                "Facebook:\n" +
-                "👥 Мангилик Ел Жастары\n\n" +
-                "Telegram канал:\n" +
-                "📢 @manglik_el_news\n\n" +
-                "YouTube:\n" +
-                "🎥 Мангилик Ел Жастары\n\n" +
-                "Жаңалықтардан қалмаңыз!");
-
-        addBackToFeedbackKeyboard(message);
-        executeEditMessage(message);
-    }
-
-    private void addBackToFeedbackKeyboard(EditMessageText message) {
-        InlineKeyboardMarkup inlineKeyboard = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-
-        List<InlineKeyboardButton> row1 = new ArrayList<>();
-        InlineKeyboardButton backButton = new InlineKeyboardButton();
-        backButton.setText("⬅️ Байланысқа қайту");
-        backButton.setCallbackData("feedback");
-        row1.add(backButton);
-
-        rows.add(row1);
-        inlineKeyboard.setKeyboard(rows);
-        message.setReplyMarkup(inlineKeyboard);
-        message.enableMarkdown(true);
-    }
-
-    private void answerCallbackQuery(String callbackQueryId) {
-        AnswerCallbackQuery answer = new AnswerCallbackQuery();
-        answer.setCallbackQueryId(callbackQueryId);
-        try {
-            execute(answer);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void executeMessage(SendMessage message) {
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void executeEditMessage(EditMessageText message) {
-        try {
-            execute(message);
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Старые методы для Reply клавиатуры (оставьте для совместимости)
-    private void sendActiveContests(Long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText("🏆 Қазіргі байқаулар:\n\n" +
-                "1. Жас таланттар конкурсы\n\n" +
-                "2. Фотоконкурс «Менің өлкем»\n\n" +
-                "3. Әдеби конкурс\n\n" +
-                "Қатысу үшін байқауды таңдап, нұсқауларды орындаңыз.");
-        executeMessage(message);
-    }
-
-    private void sendFeedbackInfo(Long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText("📞 Кері байланыс:\n\n" +
-                "Email: manglik-el@example.com\n" +
-                "Телефон: +7 777 123 4567\n" +
-                "Сіздердің сұрақтарыңыз бен ұсыныстарыңызға әрқашан қуаныштымыз!");
-        executeMessage(message);
-    }
-
-
-    private void sendStartButton(Long chatId) {
-        System.out.println("Sending start button to chat: " + chatId);
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText("👋 Қош келдіңіз! Жұмысты бастау үшін 'Старт' батырмасын басыңыз:");
-
-        ReplyKeyboardMarkup keyboardMarkup = createKeyboard(List.of("🚀 Старт"));
-        message.setReplyMarkup(keyboardMarkup);
-
-        executeMessage(message);
-    }
-
-    private void sendUnknownCommand(Long chatId) {
-        System.out.println("Sending unknown command response to chat: " + chatId);
-
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId.toString());
-        message.setText("❌ Белгісіз команда. Жұмысты бастау үшін /start пайдаланыңыз.");
-        executeMessage(message);
-    }
-
-    private ReplyKeyboardMarkup createKeyboard(List<String> buttons) {
-        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
-        List<KeyboardRow> keyboard = new ArrayList<>();
-
-        KeyboardRow row = new KeyboardRow();
-        buttons.forEach(row::add);
-        keyboard.add(row);
-
-        keyboardMarkup.setKeyboard(keyboard);
-        keyboardMarkup.setResizeKeyboard(true);
-        keyboardMarkup.setOneTimeKeyboard(false);
-
-        return keyboardMarkup;
-    }
-
-    @Override
-    public String getBotUsername() {
-        return botUsername;
-    }
-
-    @Override
-    public String getBotToken() {
-        return botToken;
-    }
+    @Override public String getBotUsername() { return botUsername; }
+    @Override public String getBotToken() { return botToken; }
 }

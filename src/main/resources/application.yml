@@ -3,9 +3,32 @@ spring:
     url: jdbc:postgresql://5.35.104.138:9725/fintech
     username: beta_sdf
     password: zMpkRXGZvGbJXBhqusQdWA7LWHXez4iPDqnzcU7uVSe
+    driver-class-name: org.postgresql.Driver
     hikari:
       schema: zhiger
-    driver-class-name: org.postgresql.Driver
+
+      services:
+        postgres:
+          image: postgres:15
+          container_name: postgres
+          restart: always
+          environment:
+            POSTGRES_DB: mangilikel
+            POSTGRES_USER: mangilikel
+            POSTGRES_PASSWORD: mangilikel
+          volumes:
+            - ./postgres/data:/var/lib/postgresql/data
+          ports:
+            - "5432:5432"
+        app:
+          image: your/app:latest
+          depends_on:
+            - postgres
+          environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mangilikel
+            SPRING_DATASOURCE_USERNAME: mangilikel
+            SPRING_DATASOURCE_PASSWORD: mangilikel
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -14,6 +37,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+        bytecode:
+          provider: bytebuddy   # ← ВОТ ОНО, ГЛАВНОЕ
 
 logging:
   level:
@@ -21,5 +46,6 @@ logging:
     root: info
 
 bot:
-  token: 8392819757:AAHEqiK5rRJ45EyXGfm-fOc3CLs501cxlEY
-  username: mangilik_el_jastary_bot
+  enabled: true
+  token: 8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM
+  username: mangilik_el_jastary_mektep_bot
