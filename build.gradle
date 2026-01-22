@@ -37,10 +37,11 @@ dependencies {
     // Telegram Bot
     implementation 'org.telegram:telegrambots:6.8.0'
 
+    implementation 'io.minio:minio:8.5.3'
+
     // Byte Buddy (ОБЯЗАТЕЛЬНО для Hibernate 6)
     implementation 'net.bytebuddy:byte-buddy:1.14.10'
     implementation 'net.bytebuddy:byte-buddy-agent:1.14.10'
-
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
