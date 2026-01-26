@@ -54,13 +54,14 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-@ConditionalOnProperty(name = "bot.enabled", havingValue = "true")
+//@ConditionalOnProperty(name = "bot.enabled", havingValue = "true")
 public class TelegramBotService extends TelegramLongPollingBot {
 
     @Value("mangilik_el_jastary_mektep_bot")
     private String botUsername;
 
-    @Value("8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM")
+    //@Value("8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM")
+    @Value("${bots.mektep.token:8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM}")
     private String botToken;
 
     private final UsersRepositroy usersRepositroy;
@@ -562,11 +563,12 @@ public class TelegramBotService extends TelegramLongPollingBot {
             SendMessage msg = new SendMessage();
             msg.setChatId(chatId.toString());
             msg.setText(
-                    "📜 Сертификат дайын!\n\n" +
-                            "Егер сертификатты алғыңыз келсе,\n" +
-                            "төлем жасап сатып ала аласыз \n" +
-                            "төлем жасаганда комментриге " + contestResultId +
-                            " санын жіберуіңізді сураймыз 👇"
+                    "📜ДИПЛОМ мен АЛҒЫС ХАТЫҢЫЗ дайын✅\n\n" +
+                            "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы 1900 теңге.\n" +
+                            "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
+                            " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
+                            "төлем жасағанда комментариге М" + contestResultId +
+                            " текстін жіберуіңізді сураймыз 👇"
             );
             //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
             String payUrl = "https://pay.kaspi.kz/pay/v0iq41rc";

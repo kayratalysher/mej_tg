@@ -7,23 +7,21 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.LongPollingBot;
-import org.telegram.telegrambots.meta.generics.TelegramBot;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class BotInitializer {
 
-    private final TelegramBot telegramBot;
-    private final LongPollingBot longPollingBot;
     private final TelegramBotsApi telegramBotsApi;
+    private final List<LongPollingBot> bots;
 
-    @EventListener({ContextRefreshedEvent.class})
-    public void init() {
-        try {
-            telegramBotsApi.registerBot(longPollingBot);
-            System.out.println("Telegram бот успешно запущен!");
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
+    @EventListener(ContextRefreshedEvent.class)
+    public void init() throws TelegramApiException {
+        for (LongPollingBot bot : bots) {
+            telegramBotsApi.registerBot(bot);
+            System.out.println("Бот запущен: " + bot.getBotUsername());
         }
     }
 }
