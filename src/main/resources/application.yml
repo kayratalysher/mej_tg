@@ -3,11 +3,16 @@ logging:
     org.telegram: debug
     root: info
 
-bot:
-  enabled: true
-  token: 8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM
-  username: mangilik_el_jastary_mektep_bot
-minio.bucket-name: public
+
+bots:
+  mektep:
+    token: 8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM
+    username: mangilik_el_jastary_mektep_bot
+
+  baqsha:
+    token: 8341785063:AAEA7W8v5sM3b_Zw30atPgXtuK8h4XSvtaI
+    username: mangilik_el_jastary_baqsha_bot
+
 
 minio:
   url: ${MINIO_URL:http://104.248.39.82:9000}
