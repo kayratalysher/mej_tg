@@ -1,0 +1,1336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://payment_gate.ws.cfc.root" xmlns:apachesoap="http://xml.apache.org/xml-soap" xmlns:impl="http://payment_gate.ws.cfc.root" xmlns:intf="http://payment_gate.ws.cfc.root" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:tns1="http://rpc.xml.coldfusion" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsdlsoap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<!--WSDL created by ColdFusion-->
+ <wsdl:types>
+  <schema targetNamespace="http://rpc.xml.coldfusion" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://payment_gate.ws.cfc.root"/>
+   <import namespace="http://xml.apache.org/xml-soap"/>
+   <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+   <complexType name="CFCInvocationException">
+    <sequence/>
+   </complexType>
+   <complexType name="QueryBean">
+    <sequence>
+     <element name="columnList" nillable="true" type="impl:ArrayOf_xsd_string"/>
+     <element name="data" nillable="true" type="impl:ArrayOfArrayOf_xsd_anyType"/>
+    </sequence>
+   </complexType>
+  </schema>
+  <schema targetNamespace="http://payment_gate.ws.cfc.root" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://xml.apache.org/xml-soap"/>
+   <import namespace="http://rpc.xml.coldfusion"/>
+   <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+   <complexType name="ArrayOf_xsd_string">
+    <complexContent>
+     <restriction base="soapenc:Array">
+      <attribute ref="soapenc:arrayType" wsdl:arrayType="xsd:string[]"/>
+     </restriction>
+    </complexContent>
+   </complexType>
+   <complexType name="ArrayOfArrayOf_xsd_anyType">
+    <complexContent>
+     <restriction base="soapenc:Array">
+      <attribute ref="soapenc:arrayType" wsdl:arrayType="xsd:anyType[][]"/>
+     </restriction>
+    </complexContent>
+   </complexType>
+  </schema>
+  <schema targetNamespace="http://xml.apache.org/xml-soap" xmlns="http://www.w3.org/2001/XMLSchema">
+   <import namespace="http://payment_gate.ws.cfc.root"/>
+   <import namespace="http://rpc.xml.coldfusion"/>
+   <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+   <complexType name="mapItem">
+    <sequence>
+     <element name="key" nillable="true" type="xsd:anyType"/>
+     <element name="value" nillable="true" type="xsd:anyType"/>
+    </sequence>
+   </complexType>
+   <complexType name="Map">
+    <sequence>
+     <element maxOccurs="unbounded" minOccurs="0" name="item" type="apachesoap:mapItem"/>
+    </sequence>
+   </complexType>
+  </schema>
+ </wsdl:types>
+
+   <wsdl:message name="get_payment_sumRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_net_source" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_start_date" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_end_date" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_payment_sumResponse">
+
+      <wsdl:part name="get_payment_sumReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="set_paymentResponse">
+
+      <wsdl:part name="set_paymentReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="cancel_paymentRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_transaction_id" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_pay_date" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_net_source_id" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_amount" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_note" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_payment_document_id" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="CFCInvocationException">
+
+      <wsdl:part name="fault" type="tns1:CFCInvocationException">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="change_passwordRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_transaction_id" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_old_password" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_new_password" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="change_passwordResponse">
+
+      <wsdl:part name="change_passwordReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_region_listResponse">
+
+      <wsdl:part name="get_region_listReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_payment_listResponse">
+
+      <wsdl:part name="get_payment_listReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="bin_registerResponse">
+
+      <wsdl:part name="bin_registerReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="set_paymentRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_transaction_id" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_bill_type_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_pay_date" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_net_source_id" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_subdivision" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_document_no" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_amount" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_note" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="customerAccount" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="ktAccount" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="payData" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_balance_detail_listRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_regionRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_device" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="charge_for_printRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_transaction_id" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_pages_count" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_balanceResponse">
+
+      <wsdl:part name="get_balanceReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_report_date_listRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="registerResponse">
+
+      <wsdl:part name="registerReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_anonymous_bill_type_listRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_payment_all_listResponse">
+
+      <wsdl:part name="get_payment_all_listReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="authenticateRequest">
+
+      <wsdl:part name="in_login" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_password" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="registerRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_device_number" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_password" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_regionResponse">
+
+      <wsdl:part name="get_regionReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="register_segmentResponse">
+
+      <wsdl:part name="register_segmentReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_balanceRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_region_listRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_anonymous_bill_type_listResponse">
+
+      <wsdl:part name="get_anonymous_bill_type_listReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="cancel_paymentResponse">
+
+      <wsdl:part name="cancel_paymentReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_balance_detail_listResponse">
+
+      <wsdl:part name="get_balance_detail_listReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_payment_listRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_net_source" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_start_date" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_end_date" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="authenticateResponse">
+
+      <wsdl:part name="authenticateReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="charge_for_printResponse">
+
+      <wsdl:part name="charge_for_printReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_charges_zipRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_report_date_id" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="register_segmentRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_device_number" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_report_date_listResponse">
+
+      <wsdl:part name="get_report_date_listReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_payment_all_listRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_abonent_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_report_date_id" type="xsd:double">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="get_charges_zipResponse">
+
+      <wsdl:part name="get_charges_zipReturn" type="xsd:anyType">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:message name="bin_registerRequest">
+
+      <wsdl:part name="in_token" type="xsd:string">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_region_id" type="xsd:double">
+
+      </wsdl:part>
+
+      <wsdl:part name="in_bin" type="xsd:string">
+
+      </wsdl:part>
+
+   </wsdl:message>
+
+   <wsdl:portType name="Payment_gate">
+
+      <wsdl:operation name="register" parameterOrder="in_token in_region_id in_abonent_id in_device_number in_password">
+
+         <wsdl:input message="impl:registerRequest" name="registerRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:registerResponse" name="registerResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="authenticate" parameterOrder="in_login in_password">
+
+         <wsdl:input message="impl:authenticateRequest" name="authenticateRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:authenticateResponse" name="authenticateResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_anonymous_bill_type_list" parameterOrder="in_token in_region_id">
+
+         <wsdl:input message="impl:get_anonymous_bill_type_listRequest" name="get_anonymous_bill_type_listRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_anonymous_bill_type_listResponse" name="get_anonymous_bill_type_listResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_balance_detail_list" parameterOrder="in_token in_region_id in_abonent_id">
+
+         <wsdl:input message="impl:get_balance_detail_listRequest" name="get_balance_detail_listRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_balance_detail_listResponse" name="get_balance_detail_listResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_charges_zip" parameterOrder="in_token in_region_id in_abonent_id in_report_date_id">
+
+         <wsdl:input message="impl:get_charges_zipRequest" name="get_charges_zipRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_charges_zipResponse" name="get_charges_zipResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cancel_payment" parameterOrder="in_token in_transaction_id in_region_id in_abonent_id in_pay_date in_net_source_id in_amount in_note in_payment_document_id">
+
+         <wsdl:input message="impl:cancel_paymentRequest" name="cancel_paymentRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:cancel_paymentResponse" name="cancel_paymentResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="charge_for_print" parameterOrder="in_token in_transaction_id in_region_id in_abonent_id in_pages_count">
+
+         <wsdl:input message="impl:charge_for_printRequest" name="charge_for_printRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:charge_for_printResponse" name="charge_for_printResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="change_password" parameterOrder="in_token in_transaction_id in_region_id in_abonent_id in_old_password in_new_password">
+
+         <wsdl:input message="impl:change_passwordRequest" name="change_passwordRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:change_passwordResponse" name="change_passwordResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_payment_sum" parameterOrder="in_token in_region_id in_abonent_id in_net_source in_start_date in_end_date">
+
+         <wsdl:input message="impl:get_payment_sumRequest" name="get_payment_sumRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_payment_sumResponse" name="get_payment_sumResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_payment_list" parameterOrder="in_token in_region_id in_abonent_id in_net_source in_start_date in_end_date">
+
+         <wsdl:input message="impl:get_payment_listRequest" name="get_payment_listRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_payment_listResponse" name="get_payment_listResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_payment_all_list" parameterOrder="in_token in_region_id in_abonent_id in_report_date_id">
+
+         <wsdl:input message="impl:get_payment_all_listRequest" name="get_payment_all_listRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_payment_all_listResponse" name="get_payment_all_listResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="register_segment" parameterOrder="in_token in_device_number">
+
+         <wsdl:input message="impl:register_segmentRequest" name="register_segmentRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:register_segmentResponse" name="register_segmentResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_report_date_list" parameterOrder="in_token in_region_id">
+
+         <wsdl:input message="impl:get_report_date_listRequest" name="get_report_date_listRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_report_date_listResponse" name="get_report_date_listResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_region_list" parameterOrder="in_token">
+
+         <wsdl:input message="impl:get_region_listRequest" name="get_region_listRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_region_listResponse" name="get_region_listResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_region" parameterOrder="in_token in_device">
+
+         <wsdl:input message="impl:get_regionRequest" name="get_regionRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_regionResponse" name="get_regionResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="set_payment" parameterOrder="in_token in_transaction_id in_region_id in_abonent_id in_bill_type_id in_pay_date in_net_source_id in_subdivision in_document_no in_amount in_note customerAccount ktAccount payData">
+
+         <wsdl:input message="impl:set_paymentRequest" name="set_paymentRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:set_paymentResponse" name="set_paymentResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="bin_register" parameterOrder="in_token in_region_id in_bin">
+
+         <wsdl:input message="impl:bin_registerRequest" name="bin_registerRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:bin_registerResponse" name="bin_registerResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_balance" parameterOrder="in_token in_region_id in_abonent_id">
+
+         <wsdl:input message="impl:get_balanceRequest" name="get_balanceRequest">
+
+       </wsdl:input>
+
+         <wsdl:output message="impl:get_balanceResponse" name="get_balanceResponse">
+
+       </wsdl:output>
+
+         <wsdl:fault message="impl:CFCInvocationException" name="CFCInvocationException">
+
+       </wsdl:fault>
+
+      </wsdl:operation>
+
+   </wsdl:portType>
+
+   <wsdl:binding name="payment_gate.cfcSoapBinding" type="impl:Payment_gate">
+
+      <wsdlsoap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+
+      <wsdl:operation name="register">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="registerRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="registerResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="authenticate">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="authenticateRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="authenticateResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_anonymous_bill_type_list">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_anonymous_bill_type_listRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_anonymous_bill_type_listResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_balance_detail_list">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_balance_detail_listRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_balance_detail_listResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_charges_zip">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_charges_zipRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_charges_zipResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="cancel_payment">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="cancel_paymentRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="cancel_paymentResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="charge_for_print">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="charge_for_printRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="charge_for_printResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="change_password">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="change_passwordRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="change_passwordResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_payment_sum">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_payment_sumRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_payment_sumResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_payment_list">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_payment_listRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_payment_listResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_payment_all_list">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_payment_all_listRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_payment_all_listResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="register_segment">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="register_segmentRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="register_segmentResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_report_date_list">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_report_date_listRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_report_date_listResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_region_list">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_region_listRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_region_listResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_region">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_regionRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_regionResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="set_payment">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="set_paymentRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="set_paymentResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="bin_register">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="bin_registerRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="bin_registerResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+      <wsdl:operation name="get_balance">
+
+         <wsdlsoap:operation soapAction=""/>
+
+         <wsdl:input name="get_balanceRequest">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:input>
+
+         <wsdl:output name="get_balanceResponse">
+
+            <wsdlsoap:body encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:output>
+
+         <wsdl:fault name="CFCInvocationException">
+
+            <wsdlsoap:fault encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" name="CFCInvocationException" namespace="http://payment_gate.ws.cfc.root" use="encoded"/>
+
+         </wsdl:fault>
+
+      </wsdl:operation>
+
+   </wsdl:binding>
+
+   <wsdl:service name="Payment_gateService">
+
+      <wsdl:port binding="impl:payment_gate.cfcSoapBinding" name="payment_gate.cfc">
+
+         <wsdlsoap:address location="http://92.46.50.41/payment_gate/cfc/ws/payment_gate/payment_gate.cfc"/>
+
+      </wsdl:port>
+
+   </wsdl:service>
+
+</wsdl:definitions>

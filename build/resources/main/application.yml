@@ -1,0 +1,16 @@
+logging:
+  level:
+    org.telegram: debug
+    root: info
+
+bot:
+  enabled: true
+  token: 8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM
+  username: mangilik_el_jastary_mektep_bot
+minio.bucket-name: public
+
+minio:
+  url: ${MINIO_URL:http://104.248.39.82:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  access-secret: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket-name: ${MINIO_BUCKET:mangilikel}
