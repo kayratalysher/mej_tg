@@ -33,6 +33,7 @@ dependencies {
 
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.apache.pdfbox:pdfbox:2.0.29'
 
     // Telegram Bot
     implementation 'org.telegram:telegrambots:6.8.0'
@@ -49,7 +50,6 @@ dependencies {
     // Tests
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
-
 tasks.named('test') {
     useJUnitPlatform()
 }

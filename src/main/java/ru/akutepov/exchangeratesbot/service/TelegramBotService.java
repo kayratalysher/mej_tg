@@ -24,6 +24,7 @@ import ru.akutepov.exchangeratesbot.repositry.ContestResultRepository;
 import ru.akutepov.exchangeratesbot.repositry.UsersRepositroy;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -65,7 +66,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private final UsersRepositroy usersRepositroy;
     private final ContestResultRepository contestResultRepository;
     private final DiplomGenerateAdapter diplomGenerateAdapter;
-
+    private final FileService fileService;
     private final Map<Long, Integer> userStep = new ConcurrentHashMap<>();
     private final Map<Long, ContestResult> tempResults = new ConcurrentHashMap<>();
 
@@ -655,22 +656,19 @@ public class TelegramBotService extends TelegramLongPollingBot {
     // ===================== FILE =====================
 
     private void sendContestFile(Long chatId) {
-        try (InputStream fileStream = getClass().getClassLoader()
-                .getResourceAsStream("files/Мақатаев оқулары мектеп.docx")) {
-
-            if (fileStream == null) {
-                sendText(chatId, "❌ Файл табылмады");
+        UUID erezheDocId = UUID.fromString("e631fd99-3d0e-4b70-9663-0bb7d16eeab2");
+        var erezheBytes = fileService.downloadFileBytes(erezheDocId);
+        if (erezheBytes != null) {
+            try (InputStream erezheStream = new ByteArrayInputStream(erezheBytes)) {
+                execute(new SendDocument(chatId.toString(),
+                        new InputFile(erezheStream, "makataev_rules.docx")));
                 return;
+            } catch (Exception e) {
+                log.error("File send error", e);
             }
 
-            execute(new SendDocument(chatId.toString(),
-                    new InputFile(fileStream, "makataev_rules.docx")));
-
-        } catch (Exception e) {
-            log.error("File send error", e);
         }
     }
-
 
 
     // ===================== UI HELPERS =====================
