@@ -514,7 +514,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 contestResultRepository.save(saved);
 
                 // Подтверждение участнику
-                sendText(chatId, "✅ Мәлімет сақталды, рахмет!");
+                sendText(chatId, "✅ Мәлімет сақталды, рақмет!");
                 sendText(chatId, "✔ Жұмысыңыз қабылданды!\n📜 Сертификат 2–3 сағат ішінде дайын болады.");
 
                 startCertificateTimer(saved.getId(), chatId);

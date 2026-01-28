@@ -458,10 +458,10 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         if (result == null || step == null) return;
 
         switch (step) {
-            case 1 -> { result.setFullName(text); userStep.put(chatId, 2); sendText(chatId, "Сыныбыңыз:"); }
+            case 1 -> { result.setFullName(text); userStep.put(chatId, 2); sendText(chatId, "Тобыңыз:"); }
             case 2 -> { result.setGrade(text); userStep.put(chatId, 3); sendText(chatId, "Телефон:"); }
             case 3 -> { result.setPhone(text); userStep.put(chatId, 4); sendText(chatId, "Жетекші аты:"); }
-            case 4 -> { result.setMentor(text); userStep.put(chatId, 5); sendText(chatId, "Мектеп:"); }
+            case 4 -> { result.setMentor(text); userStep.put(chatId, 5); sendText(chatId, "Ұйым атауы:"); }
             case 5 -> {
                 result.setSchool(text);
                 userStep.put(chatId, 6);  // бот ждёт файл
@@ -518,7 +518,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                 contestResultRepository.save(saved);
 
                 // Подтверждение участнику
-                sendText(chatId, "✅ Мәлімет сақталды, рахмет!");
+                sendText(chatId, "✅ Мәлімет сақталды, рақмет!");
                 sendText(chatId, "✔ Жұмысыңыз қабылданды!\n📜 Сертификат 2–3 сағат ішінде дайын болады.");
 
                 startCertificateTimer(saved.getId(), chatId);
