@@ -17,9 +17,14 @@ public class DiplomId {
     private Long id;
     private UUID diplomId;
     private String fullName;
+    private String menthorFullName;
     private LocalDateTime createdDate;
 
-
+    public DiplomId(String fullName, String menthorFullName) {
+        this.fullName = fullName;
+        this.menthorFullName = menthorFullName;
+        this.createdDate = LocalDateTime.now();
+    }
     public DiplomId(String fullName) {
         this.createdDate = LocalDateTime.now();
         this.fullName = fullName;

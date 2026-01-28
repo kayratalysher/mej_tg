@@ -7,16 +7,13 @@ import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType0Font;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
-import ru.akutepov.exchangeratesbot.adapter.MinioAdapter;
 import ru.akutepov.exchangeratesbot.diplom.DiplomId;
 import ru.akutepov.exchangeratesbot.diplom.DiplomRepo;
 import ru.akutepov.exchangeratesbot.service.FileService;
 
 import java.awt.*;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.Base64;
 import java.util.UUID;
 
 @Component
@@ -40,7 +37,7 @@ public class ReportSchoolGenerate {
     }
 
 
-    public byte[] generateDiplom(Integer score, String fullName) {
+    public byte[] generateDiplom(Integer score, String fullName, String jetekshi) {
         int place=3;
 
         if (score == 0) {
@@ -51,7 +48,7 @@ public class ReportSchoolGenerate {
             place = 2;
         }
         //MJ001
-        var  diplom=diplomRepo.save(new DiplomId(fullName));
+        var  diplom=diplomRepo.save(new DiplomId(fullName, jetekshi));
         String diplomId = "MJ" + String.format("%03d", diplom.getId());
 
         try {

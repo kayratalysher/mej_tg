@@ -13,9 +13,9 @@ public class DiplomStrategy {
 //    private final ReportUtilsSecond reportUtilsSecond;
 //    private final ReportUtilsThird reportUtilsThird;
 
-    public byte[] downloadDiplom(Integer score, String fullName, DiplomTemplates type) {
+    public byte[] downloadDiplom(Integer score, String fullName, String jetekshi,DiplomTemplates type) {
         if (DiplomTemplates.MUKAGALI_SCHOOL.equals(type)) {
-            return reportUtils.generateDiplom(score, fullName);
+            return reportUtils.generateDiplom(score, fullName,jetekshi);
         }
 
 //        if (type.equalsIgnoreCase("SECOND")) {
