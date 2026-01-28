@@ -9,7 +9,7 @@ public class ExchangeRatesBotApplication {
 
 	@PostConstruct
 	void init() {
-		System.err.println("=== Application started ===: version 1.0.0");
+		System.err.println("=== Application started ===: version 1.0.1");
 	}
 	public static void main(String[] args) {
 		SpringApplication.run(ExchangeRatesBotApplication.class, args);

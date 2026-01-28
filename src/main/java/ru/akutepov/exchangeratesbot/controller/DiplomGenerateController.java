@@ -24,14 +24,15 @@ public class DiplomGenerateController {
             @RequestParam Integer score,
             @RequestParam String fullName
     ) {
-        var bytes = diplomStrategy.downloadDiplom(score, fullName, DiplomTemplates.MUKAGALI_SCHOOL);
-        var fileName = String.format("diplom_%s.pdf", fullName.replaceAll(" ", "_"));
-        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
-                .replaceAll("\\+", "%20");
-
-        return ResponseEntity.ok()
-                .header("Content-Disposition",
-                        "attachment; filename*=UTF-8''" + encodedFileName)
-                .body(bytes);
+//        var bytes = diplomStrategy.downloadDiplom(score, fullName, DiplomTemplates.MUKAGALI_SCHOOL);
+//        var fileName = String.format("diplom_%s.pdf", fullName.replaceAll(" ", "_"));
+//        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+//                .replaceAll("\\+", "%20");
+//
+//        return ResponseEntity.ok()
+//                .header("Content-Disposition",
+//                        "attachment; filename*=UTF-8''" + encodedFileName);
+//                .body(bytes);
+        return null;
     }
 }
