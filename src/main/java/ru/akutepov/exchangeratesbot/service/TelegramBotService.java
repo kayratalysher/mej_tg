@@ -567,8 +567,8 @@ public class TelegramBotService extends TelegramLongPollingBot {
                             "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы 1900 теңге.\n" +
                             "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
                             " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
-                            "төлем жасағанда комментариге М" + contestResultId +
-                            " текстін жіберуіңізді сураймыз 👇"
+                            "#ЕСКЕРТУ Төлем  жасағанда каспи-комментариге М" + contestResultId +
+                            " жіберуіңізді сұраймыз \uD83D\uDC47"
             );
             //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
             String payUrl = "https://pay.kaspi.kz/pay/v0iq41rc";
@@ -588,7 +588,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
             msg.setReplyMarkup(keyboard);
             executeMessage(msg);
 
-        }, 1, TimeUnit.MINUTES);
+        }, 120, TimeUnit.MINUTES);
     }
 
     private void updateGroupMessage(ContestResult r) {
