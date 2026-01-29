@@ -24,4 +24,5 @@ public class FileDTO {
     private String objectType;
     private UUID objectId;
     private String comment;
+    private String bucket;
 }

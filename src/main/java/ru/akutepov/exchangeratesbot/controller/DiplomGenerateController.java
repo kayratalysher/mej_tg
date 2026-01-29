@@ -22,9 +22,10 @@ public class DiplomGenerateController {
     public ResponseEntity<byte[]> download(
 //            @RequestParam(required = false) String type,
             @RequestParam Integer score,
-            @RequestParam String fullName
+            @RequestParam String fullName,
+            @RequestParam String jetekshi
     ) {
-        var bytes = diplomStrategy.downloadDiplom(score, fullName, DiplomTemplates.MUKAGALI_SCHOOL);
+        var bytes = diplomStrategy.downloadDiplom(score, fullName,jetekshi, DiplomTemplates.MUKAGALI_SCHOOL);
         var fileName = String.format("diplom_%s.pdf", fullName.replaceAll(" ", "_"));
         String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
                 .replaceAll("\\+", "%20");

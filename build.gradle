@@ -34,6 +34,10 @@ dependencies {
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+    implementation 'com.google.zxing:core:3.5.2'
+    implementation 'com.google.zxing:javase:3.5.2'
+    testImplementation 'org.springframework:spring-test:6.0.6'
+
 
     // Telegram Bot
     implementation 'org.telegram:telegrambots:6.8.0'

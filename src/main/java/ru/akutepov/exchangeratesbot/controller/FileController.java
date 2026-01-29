@@ -29,8 +29,8 @@ public class FileController {
     }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public UUID saveFile(@RequestPart String fileJson, @RequestPart("file") List<MultipartFile> files, HttpServletRequest request) {
-       return fileService.saveFile(fileJson, files, request);
+    public UUID saveFile(@RequestPart String fileJson, @RequestPart("file") List<MultipartFile> files) {
+       return fileService.saveFile(fileJson, files);
     }
 
     @PutMapping("/{id}")

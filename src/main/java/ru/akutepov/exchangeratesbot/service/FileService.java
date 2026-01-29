@@ -16,6 +16,7 @@ import ru.akutepov.exchangeratesbot.model.FilterRequest;
 import ru.akutepov.exchangeratesbot.repositry.FileRepository;
 import ru.akutepov.exchangeratesbot.specification.FileSpecification;
 
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
@@ -32,13 +33,69 @@ public class FileService {
     private final MinioAdapter minioAdapter;
 
 
-    public Page<FileDTO> search(FilterRequest filter,Pageable pageable) {
+    public Page<FileDTO> search(FilterRequest filter, Pageable pageable) {
         Specification<FileEntity> specification = FileSpecification.search(filter.getFilters());
-        return fileRepository.findAll(specification, pageable)
-                .map(this::entityToDto);
+//        return fileRepository.findAll(specification, pageable)
+//                .map(this::entityToDto);
+        return Page.empty();
     }
 
-    public UUID saveFile(String fileJson, List<MultipartFile> files, HttpServletRequest request) {
+    public UUID saveFile(FileDTO fileDTO, InputStream file) {
+        FileEntity entity = FileEntity.builder()
+                .filename(fileDTO.getFilename())
+                .storedName(fileDTO.getStoredName())
+                .mimeType("application/octet-stream")
+                .fileType("pdf")
+                .comment(fileDTO.getComment())
+                .isDeleted(false)
+                .build();
+
+        entity.setUploadedAt(LocalDateTime.now());
+
+        FileEntity savedEntity = fileRepository.save(entity);
+
+        savedEntity.setObjectId(savedEntity.getId());
+        savedEntity.setObjectType(savedEntity.getFileType());
+
+        minioAdapter.uploadFile(file, fileDTO.getFilename(), savedEntity.getFileType(), savedEntity.getId(), savedEntity.getFileType());
+
+        return fileRepository.save(savedEntity).getId();
+    }
+
+    public UUID saveFile(FileDTO fileDTO, List<MultipartFile> files) {
+
+        for (MultipartFile file : files) {
+            String originalName = fileDTO.getFilename() != null ? fileDTO.getFilename() : file.getOriginalFilename();
+            LocalDateTime now = LocalDateTime.now();
+            String storedName =file.getOriginalFilename();
+            String fileType = getFileExtension(file.getOriginalFilename());
+
+            FileEntity entity = FileEntity.builder()
+                    .filename(originalName)
+                    .storedName(storedName)
+                    .mimeType(file.getContentType())
+                    .fileType(fileType)
+                    .fileSize(file.getSize())
+                    .comment(fileDTO.getComment())
+                    .isDeleted(false)
+                    .build();
+
+            entity.setUploadedAt(now);
+
+            FileEntity savedEntity = fileRepository.save(entity);
+
+            savedEntity.setObjectId(savedEntity.getId());
+            savedEntity.setObjectType(savedEntity.getFileType());
+
+            minioAdapter.uploadFile(file, "public",storedName, savedEntity.getId(), savedEntity.getFileType());
+
+            return fileRepository.save(savedEntity).getId();
+        }
+
+        return null;
+    }
+
+    public UUID saveFile(String fileJson, List<MultipartFile> files) {
         FileDTO fileDTO;
         try {
             fileDTO = mapper.readValue(fileJson, FileDTO.class);
@@ -71,7 +128,7 @@ public class FileService {
 
             minioAdapter.uploadFile(file, storedName, savedEntity.getId(), savedEntity.getFileType());
 
-          return  fileRepository.save(savedEntity).getId();
+            return fileRepository.save(savedEntity).getId();
         }
 
         return null;

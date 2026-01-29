@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="fintech@5.35.104.138" uuid="8f8d765f-d602-4041-aa27-62951f5212cf">
+    <data-source source="LOCAL" name="mangilikeldb" uuid="46f98189-50e9-400a-bd7c-80cfe8a7d57f">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
-      <imported>true</imported>
-      <remarks>$PROJECT_DIR$/src/main/resources/application.yml</remarks>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://5.35.104.138:9725/fintech</jdbc-url>
+      <jdbc-url>jdbc:postgresql://104.248.39.82:5432/mangilikeldb</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.host.port" />
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+        <property name="com.intellij.clouds.kubernetes.db.resource.type" value="Deployment" />
+        <property name="com.intellij.clouds.kubernetes.db.container.port" />
+      </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="fintech@5.35.104.138" uuid="c073ffe2-8344-406e-bfcc-5f30c6fba199">
+    <data-source source="LOCAL" name="mangilikel@104.248.39.82" uuid="8cb44d32-a4d1-4f8e-ab67-6d802de7da10">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
-      <imported>true</imported>
-      <remarks>$PROJECT_DIR$/src/main/resources/application.yml</remarks>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://5.35.104.138:9725/fintech</jdbc-url>
+      <jdbc-url>jdbc:postgresql://104.248.39.82:5432/mangilikel</jdbc-url>
       <jdbc-additional-properties>
         <property name="com.intellij.clouds.kubernetes.db.host.port" />
         <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />

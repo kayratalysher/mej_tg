@@ -26,6 +26,45 @@ public class MinioAdapter {
         this.minioClient = minioClient;
     }
 
+    public void uploadFile(InputStream inputStream, String filename, String contentType,  UUID objectId, String objectType) {
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket("public")
+                            .object(filename)
+                            .stream(inputStream, -1, 10 * 1024 * 1024)
+                            .contentType(contentType)
+                            .userMetadata(Map.of(
+                                    "object-id", String.valueOf(objectId),
+                                    "object-type", objectType
+                            ))
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error during uploading file: " + filename, e);
+        }
+    }
+
+    public void uploadFile(MultipartFile file,String nativeBucket, String filename, UUID objectId, String objectType) {
+        try (InputStream inputStream = file.getInputStream()) {
+
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(nativeBucket)
+                            .object(filename)
+                            .stream(inputStream, file.getSize(), -1)
+                            .contentType(file.getContentType())
+                            .userMetadata(Map.of(
+                                    "object-id", String.valueOf(objectId),
+                                    "object-type", objectType
+                            ))
+                            .build()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error during uploading file: " + file.getOriginalFilename(), e);
+        }
+    }
+
     public void uploadFile(MultipartFile file, String filename, UUID objectId, String objectType) {
         try (InputStream inputStream = file.getInputStream()) {
 
