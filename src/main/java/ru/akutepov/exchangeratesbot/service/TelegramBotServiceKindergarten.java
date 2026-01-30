@@ -37,6 +37,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
+
 //@ConditionalOnProperty(name = "bot.enabled", havingValue = "true")
 public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
@@ -60,7 +62,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
     private final UsersRepositroy usersRepositroy;
     private final ContestResultRepository contestResultRepository;
     private final DiplomGenerateAdapter diplomGenerateAdapter;
-
+    private final FileService fileService;
     private final Map<Long, Integer> userStep = new ConcurrentHashMap<>();
     private final Map<Long, ContestResult> tempResults = new ConcurrentHashMap<>();
 
@@ -397,22 +399,31 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
             return;
         }
 
-        String caption =
-                "📘 МАҚАТАЕВ ОҚУЛАРЫ\n\n" +
-                        "МҰҚАҒАЛИ МАҚАТАЕВТЫҢ ТУҒАНЫНА  95 ЖЫЛ ТОЛУЫНА ОРАЙ ӨТКІЗІЛЕТІН\n\n" +
-                        "• Барлық қатысушыларға «MÁŃGLIK EL JASTARY»қоғамдық қорының арнайы лауреаттық дипломдары беріледі.\n" +
-                        "• Шәкірт дайындаған жетекшілерге «Алғыс хат»табысталады.\n" +
-                        "• Үздік деп танылған 100 оқушыға брендталған «Premium» бокс беріледі.\n\n" +
-                        "“Бас жүлде” бір жылға шәкіртақы!\n" +
-                        "Жетекшісіне “Құрмет грамотасы”\n" +
-                        "“Бас жүлде” бір жылға шәкіртақы!\n" +
-                        "“МҰҚАҒАЛИ МАҚАТАЕВ 95 жыл” медалі мен куәлігі салтанатты түрде табысталады.\n" +
-                        "Оқушылар мен жетекшілерге Алматы қаласының танымдық жерлеріне  саяхат.\n\n" +
-                        "Қатысу үшін басыңыз:";
+        String caption = """
+                📘 МАҚАТАЕВ ОҚУЛАРЫ
+                
+                МҰҚАҒАЛИ МАҚАТАЕВТЫҢ ТУҒАНЫНА 95 ЖЫЛ ТОЛУЫНА ОРАЙ ӨТКІЗІЛЕТІН БАЛАБАҚША ЖӘНЕ МЕКТЕПКЕ ДЕЙІНГІ ҰЙЫМ ТӘРБИЕЛЕНУШІЛЕРІНЕ АРНАЛҒАН РЕСПУБЛИКАЛЫҚ БАЙҚАУ
+                
+                Барлық қатысқан балаларға: ☑️Арнайы ДИПЛОМ;
+                 ☑️Көркем жазуға арналған ОЙЫҚ ДӘПТЕР сыйлыққа (100% қатысушыға) беріледі.
+                10 баланың жұмысын жолдаған тәрбиешілерге: 🎖️ «МҰҚАҒАЛИ МАҚАТАЕВ – 95 ЖЫЛ» мерекелік медалі; – Медальдің ресми куәлігі табысталады.
+                Қатысу үшін басыңыз:
+                """;
 
         SendPhoto photo = new SendPhoto();
         photo.setChatId(chatId.toString());
-        photo.setPhoto(new InputFile(imageStream, "mukagali.jpg"));
+
+        UUID afishaDocIdSadik = UUID.fromString("03341f6b-0a3b-4252-9e61-3a7f9c0c66c0");
+        var afishaBytes = fileService.downloadFileBytes(afishaDocIdSadik);
+        if (afishaBytes != null) {
+            try (InputStream afishaStream = new ByteArrayInputStream(afishaBytes)) {
+                photo.setPhoto(new InputFile(afishaStream, "mukagali_baksha.jpg"));
+            } catch (Exception e) {
+                log.error("File send error", e);
+            }
+
+        }
+
         photo.setCaption(caption);
 
         // 3) Добавляем кнопки
@@ -447,10 +458,10 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         if (result == null || step == null) return;
 
         switch (step) {
-            case 1 -> { result.setFullName(text); userStep.put(chatId, 2); sendText(chatId, "Сыныбыңыз:"); }
+            case 1 -> { result.setFullName(text); userStep.put(chatId, 2); sendText(chatId, "Тобыңыз:"); }
             case 2 -> { result.setGrade(text); userStep.put(chatId, 3); sendText(chatId, "Телефон:"); }
             case 3 -> { result.setPhone(text); userStep.put(chatId, 4); sendText(chatId, "Жетекші аты:"); }
-            case 4 -> { result.setMentor(text); userStep.put(chatId, 5); sendText(chatId, "Мектеп:"); }
+            case 4 -> { result.setMentor(text); userStep.put(chatId, 5); sendText(chatId, "Ұйым атауы:"); }
             case 5 -> {
                 result.setSchool(text);
                 userStep.put(chatId, 6);  // бот ждёт файл
@@ -507,7 +518,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                 contestResultRepository.save(saved);
 
                 // Подтверждение участнику
-                sendText(chatId, "✅ Мәлімет сақталды, рахмет!");
+                sendText(chatId, "✅ Мәлімет сақталды, рақмет!");
                 sendText(chatId, "✔ Жұмысыңыз қабылданды!\n📜 Сертификат 2–3 сағат ішінде дайын болады.");
 
                 startCertificateTimer(saved.getId(), chatId);
@@ -560,8 +571,8 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                             "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы 1900 теңге.\n" +
                             "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
                             " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
-                            "төлем жасағанда комментариге Б" + contestResultId +
-                            " текстін жіберуіңізді сураймыз 👇"
+                            "#ЕСКЕРТУ Төлем жасағанда каспи-комментариге Б" + contestResultId +
+                            " жіберуіңізді сұраймыз \uD83D\uDC47"
             );
 
             //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
@@ -652,19 +663,17 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
     // ===================== FILE =====================
 
     private void sendContestFile(Long chatId) {
-        try (InputStream fileStream = getClass().getClassLoader()
-                .getResourceAsStream("files/Мақатаев оқулары мектеп.docx")) {
-
-            if (fileStream == null) {
-                sendText(chatId, "❌ Файл табылмады");
+        UUID erezheDocId = UUID.fromString("ac29733a-f800-48da-a058-ef2de3b1a43c");
+        var erezheBytes = fileService.downloadFileBytes(erezheDocId);
+        if (erezheBytes != null) {
+            try (InputStream erezheStream = new ByteArrayInputStream(erezheBytes)) {
+                execute(new SendDocument(chatId.toString(),
+                        new InputFile(erezheStream, "makataev_rules.docx")));
                 return;
+            } catch (Exception e) {
+                log.error("File send error", e);
             }
 
-            execute(new SendDocument(chatId.toString(),
-                    new InputFile(fileStream, "makataev_rules.docx")));
-
-        } catch (Exception e) {
-            log.error("File send error", e);
         }
     }
 
