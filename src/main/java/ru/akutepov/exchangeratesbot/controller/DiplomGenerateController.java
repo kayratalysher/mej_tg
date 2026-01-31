@@ -35,4 +35,21 @@ public class DiplomGenerateController {
                         "attachment; filename*=UTF-8''" + encodedFileName)
                 .body(bytes);
     }
+
+
+    @GetMapping(value = "/download-algis", produces = "application/pdf")
+    public ResponseEntity<byte[]> download(
+//            @RequestParam(required = false) String type,
+            @RequestParam String jetekshi
+    ) {
+        var bytes = diplomStrategy.downloadSchoolAlgys(DiplomTemplates.ALGYS_BALSABAKSHA,jetekshi);
+        var fileName = String.format("diplom_%s.pdf", jetekshi.replaceAll(" ", "_"));
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replaceAll("\\+", "%20");
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition",
+                        "attachment; filename*=UTF-8''" + encodedFileName)
+                .body(bytes);
+    }
 }

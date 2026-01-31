@@ -9,24 +9,25 @@ import ru.akutepov.exchangeratesbot.diplom.strategy.ReportSchoolGenerate;
 @Component
 @RequiredArgsConstructor
 public class DiplomStrategy {
-    private final ReportSchoolGenerate reportUtils;
+    private final ReportSchoolGenerate schoolGenerate;
 //    private final ReportUtilsSecond reportUtilsSecond;
 //    private final ReportUtilsThird reportUtilsThird;
 
     public byte[] downloadDiplom(Integer score, String fullName, String jetekshi,DiplomTemplates type) {
-        if (DiplomTemplates.MUKAGALI_SCHOOL.equals(type)) {
-            return reportUtils.generateAndSaveDiplom(score, fullName,jetekshi,true);
+        if (DiplomTemplates.MUKAGALI_SCHOOL.equals(type) || DiplomTemplates.MUKAGALI_BALSABAKSHA.equals(type)) {
+            return schoolGenerate.generateAndSaveDiplom(type,score, fullName,jetekshi,false);
         }
-
-//        if (type.equalsIgnoreCase("SECOND")) {
-//            return reportUtilsSecond.generateDiplom(score, fullName);
-//        }
-//
-//        if (type.equalsIgnoreCase("THIRD")) {
-//            return reportUtilsThird.generateDiplom(score, fullName);
-//        }
 
         return null;
 
+    }
+
+
+    public byte[] downloadSchoolAlgys(DiplomTemplates type,String jetekshi) {
+        if (DiplomTemplates.ALGYS_SCHOOL.equals(type) || DiplomTemplates.ALGYS_BALSABAKSHA.equals(type)) {
+            return schoolGenerate.generateAndSaveAlgys(jetekshi,type,false);
+        }
+
+        return null;
     }
 }

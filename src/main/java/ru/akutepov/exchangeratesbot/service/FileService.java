@@ -17,10 +17,9 @@ import ru.akutepov.exchangeratesbot.repositry.FileRepository;
 import ru.akutepov.exchangeratesbot.specification.FileSpecification;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 
 @Service
@@ -193,5 +192,25 @@ public class FileService {
                 .objectId(fileEntity.getObjectId())
                 .comment(fileEntity.getComment())
                 .build();
+    }
+
+    public String uploadFileVideo(InputStream fileStream, String savedFileName, Long fileSizeBytes) {
+
+        FileEntity entity = FileEntity.builder()
+                .filename(savedFileName)
+                .storedName(savedFileName)
+                .mimeType("mp")
+                .fileType("video/mp4")
+                .fileSize(fileSizeBytes)
+                .comment("Большие файлы")
+                .isDeleted(false)
+                .build();
+
+        entity.setUploadedAt(LocalDateTime.now());
+
+        FileEntity savedEntity = fileRepository.save(entity);
+
+        minioAdapter.uploadFileVideo(fileStream, fileSizeBytes, savedFileName,"video/mp4");
+        return "https://files.mangilikel-jastary.kz/public/" + savedFileName+".mp4";
     }
 }

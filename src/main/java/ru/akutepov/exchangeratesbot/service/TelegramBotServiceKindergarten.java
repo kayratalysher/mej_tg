@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import ru.akutepov.exchangeratesbot.adapter.DiplomGenerateAdapter;
+import ru.akutepov.exchangeratesbot.diplom.enums.DiplomTemplates;
 import ru.akutepov.exchangeratesbot.entity.ContestResult;
 import ru.akutepov.exchangeratesbot.entity.ParticipantStatus;
 import ru.akutepov.exchangeratesbot.entity.Users;
@@ -320,8 +321,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
     private void fetchAndSendCertificate(ContestResult r) {
         try {
-            String typeHandler=r.getDiplomaCategory() ==1 ? null : r.getDiplomaCategory()==2 ? "SECOND" : "THIRD";
-            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),typeHandler,60);
+            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),r.getMentor(), DiplomTemplates.MUKAGALI_BALSABAKSHA,r.getDiplomaCategory());
 
             if (diplomaBytes == null || diplomaBytes.length == 0) {
                 throw new RuntimeException("Диплом пришёл пустой");
@@ -334,8 +334,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                     new InputFile(certificateStream, "diplom.pdf")
             ));
             //диплом руководителю
-            String typeHandlerHead=r.getDiplomaCategory() ==1 ? null : r.getDiplomaCategory()==2 ? "SECOND" : "THIRD";
-            byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiploma(r.getMentor(),typeHandler,60);
+            byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.ALGYS_BALSABAKSHA);
 
             if (diplomaBytesHead == null || diplomaBytesHead.length == 0) {
                 throw new RuntimeException("Диплом пришёл пустой");
@@ -740,6 +739,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
             case WANT_TO_BUY -> "🛒 Сертификат алғысы келеді";
             case PAID_PENDING -> "⏳ Төлем тексерілуде";
             case APPROVED -> "✅ Төлем расталды";
+            case AWAITING_CHECK -> "⏳ Тексерілуде";
             case REJECTED -> "❌ Бас тартты";
         };
     }

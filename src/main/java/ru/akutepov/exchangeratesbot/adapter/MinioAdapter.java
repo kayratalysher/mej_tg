@@ -26,7 +26,28 @@ public class MinioAdapter {
         this.minioClient = minioClient;
     }
 
-    public void uploadFile(InputStream inputStream, String filename, String contentType,  UUID objectId, String objectType) {
+    public void uploadFileVideo(InputStream fileStream, long size, String fileName,String contentType) {
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket("public")
+                            .object(fileName)
+                            .stream(
+                                    fileStream,
+                                    size,
+                                    -1
+                            )
+                            .contentType(contentType)
+                            .build()
+            );
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error during uploading file: " + fileName, e);
+        }
+    }
+
+
+    public void uploadFile(InputStream inputStream, String filename, String contentType, UUID objectId, String objectType) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -45,7 +66,7 @@ public class MinioAdapter {
         }
     }
 
-    public void uploadFile(MultipartFile file,String nativeBucket, String filename, UUID objectId, String objectType) {
+    public void uploadFile(MultipartFile file, String nativeBucket, String filename, UUID objectId, String objectType) {
         try (InputStream inputStream = file.getInputStream()) {
 
             minioClient.putObject(

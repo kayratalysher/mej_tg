@@ -28,6 +28,7 @@ public class ContestResult {
     private String workFileName;
     @Enumerated(EnumType.STRING)
     private ParticipantStatus status;
+    private LocalDateTime certificateNotifyAt;
 
     @Column(name = "diploma_category")
     private Integer diplomaCategory; // 1, 2 или 3
@@ -39,10 +40,7 @@ public class ContestResult {
     public ParticipantStatus getStatus() {
         return status;
     }
-    public enum ContestResultStatus {
-        NOT_PAID,
-        PAID;
-    }
+
 
     @ManyToOne
     @JoinColumn(name = "contest_id")
