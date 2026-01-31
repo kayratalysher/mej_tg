@@ -1,10 +1,8 @@
 package ru.akutepov.exchangeratesbot.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,30 +25,16 @@ import ru.akutepov.exchangeratesbot.repositry.ContestResultRepository;
 import ru.akutepov.exchangeratesbot.repositry.UsersRepositroy;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpRequest.BodyPublishers;
-import java.net.http.HttpResponse.BodyHandlers;
+
 import java.util.Map;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 
 
 @Component
@@ -731,7 +715,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
                 }
 
                 saved.setStatus(ParticipantStatus.AWAITING_CHECK);
-                saved.setCertificateNotifyAt(LocalDateTime.now().plusDays(2));
+                saved.setCertificateNotifyAt(LocalDateTime.now().plusHours(2));
                 contestResultRepository.save(saved);
                 log.info("🔄 Status changed to AWAITING_CHECK | id={}, notifyAt={}", saved.getId(), saved.getCertificateNotifyAt());
 
