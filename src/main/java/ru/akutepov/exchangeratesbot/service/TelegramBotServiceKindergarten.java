@@ -416,7 +416,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
             if (r.getChannelMessageId() != null) {
                 log.info("📝 Updating channel message | channelMessageId={}", r.getChannelMessageId());
                 EditMessageText edit = new EditMessageText();
-                edit.setChatId("-1003235201523");
+                edit.setChatId("-1003536873919");
                 edit.setMessageId(r.getChannelMessageId());
                 edit.setText(buildGroupText(r));
                 edit.setReplyMarkup(null);
