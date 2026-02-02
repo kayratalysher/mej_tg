@@ -517,7 +517,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         userStep.put(chatId, 1);
         tempResults.put(chatId, new ContestResult());
         log.info("📝 Registration flow started | chatId={}, step=1", chatId);
-        sendText(chatId, "Атыңыз-жөніңіз:");
+        sendText(chatId, "Тәрбиеленушінің аты-жөні");
     }
 
     private void processUserInput(Long chatId, String text) {
@@ -791,8 +791,8 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                         "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы 1900 теңге.\n" +
                         "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
                         " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
-                        "#ЕСКЕРТУ Төлем  жасағанда каспи-комментариге М" + r.getId() +
-                        " жіберуіңізді сұраймыз \uD83D\uDC47"
+                        "🟥🟥🟥 ЕСКЕРТУ 🟥🟥🟥\n" +
+                        "Төлем жасағанда каспи-комментариге М" + r.getId() + " жіберуіңізді сұраймыз 👇"
         );
         //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
         String payUrl = "https://pay.kaspi.kz/pay/v0iq41rc";
