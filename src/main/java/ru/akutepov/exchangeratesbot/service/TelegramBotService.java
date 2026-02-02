@@ -19,6 +19,7 @@ import ru.akutepov.exchangeratesbot.adapter.DiplomGenerateAdapter;
 import ru.akutepov.exchangeratesbot.adapter.MinioAdapter;
 import ru.akutepov.exchangeratesbot.diplom.enums.DiplomTemplates;
 import ru.akutepov.exchangeratesbot.entity.ContestResult;
+import ru.akutepov.exchangeratesbot.entity.ContestType;
 import ru.akutepov.exchangeratesbot.entity.ParticipantStatus;
 import ru.akutepov.exchangeratesbot.entity.Users;
 import ru.akutepov.exchangeratesbot.repositry.ContestResultRepository;
@@ -514,6 +515,7 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private void processUserInput(Long chatId, String text) {
         log.info("📝 processUserInput | chatId={}, text={}", chatId, text);
         ContestResult result = tempResults.get(chatId);
+        result.setContestType(ContestType.MEKTEP_MAKATAEV);
         Integer step = userStep.get(chatId);
 
         if (result == null || step == null) {
@@ -760,8 +762,9 @@ public class TelegramBotService extends TelegramLongPollingBot {
     @Scheduled(fixedDelay = 60000)
     public void certificateJob() {
         List<ContestResult> list =
-                contestResultRepository.findAllByStatusAndCertificateNotifyAtBefore(
+                contestResultRepository.findAllByStatusAndContestTypeAndCertificateNotifyAtBefore(
                         ParticipantStatus.AWAITING_CHECK,
+                        ContestType.MEKTEP_MAKATAEV,
                         LocalDateTime.now()
                 );
 

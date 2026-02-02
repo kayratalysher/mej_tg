@@ -37,6 +37,9 @@ public class ContestResult {
     private String workFileId; // новое поле для файла
 
     private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    private ContestType contestType;
+
     public ParticipantStatus getStatus() {
         return status;
     }

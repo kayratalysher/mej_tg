@@ -3,6 +3,7 @@ package ru.akutepov.exchangeratesbot.repositry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ru.akutepov.exchangeratesbot.entity.ContestResult;
+import ru.akutepov.exchangeratesbot.entity.ContestType;
 import ru.akutepov.exchangeratesbot.entity.Contests;
 import ru.akutepov.exchangeratesbot.entity.ParticipantStatus;
 
@@ -17,4 +18,5 @@ public interface ContestResultRepository extends JpaRepository<ContestResult,Lon
     List<ContestResult> findByStatus(ParticipantStatus participantStatus);
 
     List<ContestResult> findAllByStatusAndCertificateNotifyAtBefore(ParticipantStatus participantStatus, LocalDateTime now);
+    List<ContestResult> findAllByStatusAndContestTypeAndCertificateNotifyAtBefore(ParticipantStatus participantStatus, ContestType contestType, LocalDateTime now);
 }
