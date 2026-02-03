@@ -58,7 +58,6 @@ public class TelegramBotService extends TelegramLongPollingBot {
     private final FileService fileService;
     private final Map<Long, Integer> userStep = new ConcurrentHashMap<>();
     private final Map<Long, ContestResult> tempResults = new ConcurrentHashMap<>();
-
     // ====== SERVICE ONLY — NO BOT STARTUP HERE ======
 
 
