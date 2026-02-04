@@ -25,7 +25,7 @@ public class Contests {
     private LocalDate endDate;
     @Enumerated(EnumType.STRING)
     private ContestsStatus status;
-
+    private ContestType contestType;
     public enum ContestsStatus {
         ACTIVE,
         INACTIVE;

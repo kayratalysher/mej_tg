@@ -13,6 +13,9 @@ bots:
     token: 8341785063:AAEA7W8v5sM3b_Zw30atPgXtuK8h4XSvtaI
     username: mangilik_el_jastary_baqsha_bot
 
+  test:
+    token: 8392819757:AAHEqiK5rRJ45EyXGfm-fOc3CLs501cxlEY
+    username: mangilik_el_jastary_bot
 
 minio:
   url: ${MINIO_URL:http://104.248.39.82:9000}
