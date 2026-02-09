@@ -25,6 +25,11 @@ import ru.akutepov.exchangeratesbot.entity.Users;
 import ru.akutepov.exchangeratesbot.repositry.ContestResultRepository;
 import ru.akutepov.exchangeratesbot.repositry.UsersRepositroy;
 
+import ru.akutepov.exchangeratesbot.entity.Contests;
+import ru.akutepov.exchangeratesbot.repositry.ContestsRepository;
+import ru.akutepov.exchangeratesbot.service.ContestsService;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.LocalDateTime;
@@ -56,9 +61,10 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
     private final DiplomGenerateAdapter diplomGenerateAdapter;
     private final MinioAdapter minioAdapter;
     private final FileService fileService;
+    private final ContestsService contestsService;
     private final Map<Long, Integer> userStep = new ConcurrentHashMap<>();
     private final Map<Long, ContestResult> tempResults = new ConcurrentHashMap<>();
-
+    private final Map<Long, Long> selectedContest = new ConcurrentHashMap<>();
     // ====== SERVICE ONLY — NO BOT STARTUP HERE ======
 
 
@@ -193,8 +199,14 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
     }
 
 
-    private void handleCallbackQuery(Long chatId, Integer messageId, String data, String callbackId) {
+    private void handleCallbackQuery(Long chatId, Integer messageId, String data, String callbackId ) {
         log.info("🔔 handleCallbackQuery | chatId={}, messageId={}, data={}, callbackId={}", chatId, messageId, data, callbackId);
+        if (data.startsWith("contest_details_")) {
+            Long contestId = Long.parseLong(data.replace("contest_details_", ""));
+            selectedContest.put(chatId, contestId);
+            showContestDetails(chatId, messageId, contestId.intValue());
+            return;
+        }
 
         if (data.startsWith("payment_ok_")) {
             log.info("💳 Payment OK callback | data={}", data);
@@ -220,23 +232,14 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                 log.info("📋 Active contests callback");
                 showActiveContests(chatId, messageId);
             }
-            case "contest_details_1" -> {
-                log.info("📖 Contest details 1 callback");
-                showContestDetails(chatId, messageId, 1);
-            }
-            case "contest_details_2" -> {
-                log.info("📖 Contest details 2 callback");
-                showContestDetails(chatId, messageId, 2);
-            }
+
             case "participate_contest" -> {
                 log.info("✍️ Participate contest callback");
                 startParticipation(chatId);
             }
-            case "download_contest_1" -> {
-                log.info("📥 Download contest file callback");
-                sendContestFile(chatId);
-            }
         }
+
+
 
         // Обработка выбора диплома
         if (data.startsWith("set_diploma_")) {
@@ -369,7 +372,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         try {
             log.info("🔽 Downloading diploma | fullName={}, mentor={}, category={}",
                     r.getFullName(), r.getMentor(), r.getDiplomaCategory());
-            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),r.getMentor(), DiplomTemplates.MUKAGALI_BALSABAKSHA,r.getDiplomaCategory());
+            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),r.getMentor(), DiplomTemplates.MUKAGALI_SCHOOL,r.getDiplomaCategory());
 
             if (diplomaBytes == null || diplomaBytes.length == 0) {
                 log.error("❌ Diploma bytes are empty | resultId={}", r.getId());
@@ -388,7 +391,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
             //диплом руководителю
             log.info("🔽 Downloading algys diploma for mentor | mentor={}", r.getMentor());
-            byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.ALGYS_BALSABAKSHA);
+            byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.ALGYS_SCHOOL);
 
             if (diplomaBytesHead == null || diplomaBytesHead.length == 0) {
                 log.error("❌ Algys diploma bytes are empty | resultId={}", r.getId());
@@ -416,7 +419,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
             if (r.getChannelMessageId() != null) {
                 log.info("📝 Updating channel message | channelMessageId={}", r.getChannelMessageId());
                 EditMessageText edit = new EditMessageText();
-                edit.setChatId("-1003536873919");
+                edit.setChatId("-1003235201523");
                 edit.setMessageId(r.getChannelMessageId());
                 edit.setText(buildGroupText(r));
                 edit.setReplyMarkup(null);
@@ -434,7 +437,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         log.info("🧪 testChannel | Testing channel message sending");
         try {
             Message m = execute(
-                    new SendMessage("-1003536873919", "TEST CHANNEL MESSAGE")
+                    new SendMessage("-1003235201523", "TEST CHANNEL MESSAGE")
             );
             log.info("✅ TEST SENT successfully | messageId={}", m.getMessageId());
         } catch (Exception e) {
@@ -442,9 +445,10 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         }
     }
 
+
     private void showContestDetails(Long chatId, Integer messageId, int contestId) {
         log.info("📖 showContestDetails | chatId={}, messageId={}, contestId={}", chatId, messageId, contestId);
-
+        Contests contest = contestsService.getById((long) contestId);
         // 1) редактируем старое сообщение, чтобы убрать меню
         log.info("🔄 Editing message to show loading | messageId={}", messageId);
         EditMessageText progress = new EditMessageText();
@@ -453,33 +457,13 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         progress.setText("Жүктелуде...");
         executeEditMessage(progress);
 
-        // 2) Подгружаем афишу
-        log.info("🖼️ Loading contest poster image");
-        InputStream imageStream = getClass().getClassLoader()
-                .getResourceAsStream("files/mukagali.jpg");
-
-        if (imageStream == null) {
-            log.error("❌ Contest poster not found | chatId={}", chatId);
-            sendText(chatId, "❌ Афиша табылмады");
-            return;
-        }
-        log.info("✅ Poster loaded successfully");
-
-        String caption = """
-                📘 МАҚАТАЕВ ОҚУЛАРЫ
-                
-                МҰҚАҒАЛИ МАҚАТАЕВТЫҢ ТУҒАНЫНА 95 ЖЫЛ ТОЛУЫНА ОРАЙ ӨТКІЗІЛЕТІН БАЛАБАҚША ЖӘНЕ МЕКТЕПКЕ ДЕЙІНГІ ҰЙЫМ ТӘРБИЕЛЕНУШІЛЕРІНЕ АРНАЛҒАН РЕСПУБЛИКАЛЫҚ БАЙҚАУ
-                
-                Барлық қатысқан балаларға: ☑️Арнайы ДИПЛОМ;
-                 ☑️Көркем жазуға арналған ОЙЫҚ ДӘПТЕР сыйлыққа (100% қатысушыға) беріледі.
-                10 баланың жұмысын жолдаған тәрбиешілерге: 🎖️ «МҰҚАҒАЛИ МАҚАТАЕВ – 95 ЖЫЛ» мерекелік медалі; – Медальдің ресми куәлігі табысталады.
-                Қатысу үшін басыңыз:
-                """;
+        String caption = contest.getDescription();
 
         SendPhoto photo = new SendPhoto();
         photo.setChatId(chatId.toString());
 
-        UUID afishaDocIdSadik = UUID.fromString("03341f6b-0a3b-4252-9e61-3a7f9c0c66c0");
+        //UUID afishaDocIdSadik = UUID.fromString("03341f6b-0a3b-4252-9e61-3a7f9c0c66c0");
+        UUID afishaDocIdSadik = UUID.fromString(contest.getImageUrl());
         var afishaBytes = fileService.downloadFileBytes(afishaDocIdSadik);
         if (afishaBytes != null) {
             try (InputStream afishaStream = new ByteArrayInputStream(afishaBytes)) {
@@ -495,7 +479,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         // 3) Добавляем кнопки
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
                 List.of(button("✅ Қатысу", "participate_contest")),
-                List.of(button("📄 Ереже", "download_contest_1")),
+                List.of(button("📄 Ереже", "rules_" + contestId)),
                 List.of(button("⬅ Артқа", "active_contests"))
         ));
         photo.setReplyMarkup(keyboard);
@@ -516,9 +500,15 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
     private void startParticipation(Long chatId) {
         log.info("✍️ startParticipation | chatId={}", chatId);
         userStep.put(chatId, 1);
-        tempResults.put(chatId, new ContestResult());
+        Long contestId = selectedContest.get(chatId);
+        Contests contest = contestsService.getById(contestId);
+
+        ContestResult r = new ContestResult();
+        r.setContest(contest);
+        r.setContestName(contest.getName());   // <-- ВОТ ТУТ
         log.info("📝 Registration flow started | chatId={}, step=1", chatId);
-        sendText(chatId, "Тәрбиеленушінің аты-жөні");
+        tempResults.put(chatId, r);
+        sendText(chatId, "Қатысушының аты-жөні");
     }
 
     private void processUserInput(Long chatId, String text) {
@@ -538,7 +528,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                 log.info("👤 Saving fullName | chatId={}", chatId);
                 result.setFullName(text);
                 userStep.put(chatId, 2);
-                sendText(chatId, "Тобыңыз:");
+                sendText(chatId, "Сыныбыңыз:");
             }
             case 2 -> {
                 log.info("🎓 Saving grade | chatId={}", chatId);
@@ -556,7 +546,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                 log.info("👨‍🏫 Saving mentor | chatId={}", chatId);
                 result.setMentor(text);
                 userStep.put(chatId, 5);
-                sendText(chatId, "Ұйым атауы:");
+                sendText(chatId, "Мектеп:");
             }
             case 5 -> {
                 log.info("🏫 Saving school | chatId={}", chatId);
@@ -680,14 +670,14 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                         fileInfo += "\n⚠️ Файл НЕ загружен в MinIO (недоступен для Bot API)";
                     }
 
-                    SendMessage bigFileMsg = new SendMessage("-1003536873919", fileInfo);
+                    SendMessage bigFileMsg = new SendMessage("-1003235201523", fileInfo);
                     execute(bigFileMsg);
                     log.info("✅ Large file info sent to channel");
 
                 } else if (shouldUploadToMinio && minioUrl != null) {
                     // Видео загружено в MinIO
                     log.info("📤 Sending MinIO link to channel | savedId={}, minioUrl={}", saved.getId(), minioUrl);
-                    SendMessage minioMsg = new SendMessage("-1003536873919",
+                    SendMessage minioMsg = new SendMessage("-1003235201523",
                             "🎥 Видео файл (большой размер)\n" +
                                     "📁 Файл: " + savedFileName + "\n" +
                                     "💾 Размер: " + (fileSize / (1024 * 1024)) + " МБ\n" +
@@ -699,7 +689,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                     // Обычный файл - отправляем напрямую
                     log.info("📤 Sending file to channel | savedId={}", saved.getId());
                     SendDocument sendDoc = new SendDocument();
-                    sendDoc.setChatId("-1003536873919");
+                    sendDoc.setChatId("-1003235201523");
                     sendDoc.setDocument(new InputFile(new java.net.URL(fileUrl).openStream(), savedFileName));
                     execute(sendDoc);
                     log.info("✅ File sent to channel successfully");
@@ -707,7 +697,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
                 // 🔹 Отправка отдельного текстового сообщения с кнопками
                 log.info("📤 Sending info message to channel | savedId={}", saved.getId());
-                SendMessage msg = new SendMessage("-1003536873919", buildGroupText(saved));
+                SendMessage msg = new SendMessage("-1003235201523", buildGroupText(saved));
                 Message textMessage = execute(msg);
                 log.info("✅ Info message sent | channelMessageId={}", textMessage.getMessageId());
 
@@ -727,6 +717,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
                 saved.setStatus(ParticipantStatus.AWAITING_CHECK);
                 saved.setCertificateNotifyAt(LocalDateTime.now().plusHours(2));
+                //saved.setCertificateNotifyAt(LocalDateTime.now().plusMinutes(2));
                 contestResultRepository.save(saved);
                 log.info("🔄 Status changed to AWAITING_CHECK | id={}, notifyAt={}", saved.getId(), saved.getCertificateNotifyAt());
 
@@ -742,29 +733,8 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         } else {
             log.warn("⚠️ File sent at wrong step | chatId={}, step={}", chatId, step);
         }
-    }
 
-
-    private void sendContestResultToChannelTextOnly(ContestResult r) {
-        SendMessage msg = new SendMessage();
-        msg.setChatId("-1003536873919");
-        msg.setText(buildGroupText(r));
-
-        try {
-            Message sent = execute(msg);
-            if (sent != null) {
-                r.setChannelMessageId(sent.getMessageId());
-                contestResultRepository.save(r);
-            }
-        } catch (Exception e) {
-            log.error("Send text to channel error", e);
-        }
-    }
-
-    private InputStream fileIdToInputStream(String fileId) throws Exception {
-        var file = execute(new org.telegram.telegrambots.meta.api.methods.GetFile(fileId));
-        var fileUrl = "https://api.telegram.org/file/bot" + botToken + "/" + file.getFilePath();
-        return new java.net.URL(fileUrl).openStream();
+        sendCertificateMessage(result);
     }
 
 
@@ -799,7 +769,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         );
         //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
         String payUrl = "https://pay.kaspi.kz/pay/v0iq41rc";
-
+        //tring payUrl = "https://pay.kaspi.kz/pay/v0iq41rc?comment=M" + r.getId();
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
                 List.of(payUrlButton("💳 Сертификатты төлеу", payUrl)),
                 List.of(callbackButton(
@@ -837,7 +807,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                     ));
 
                     EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
-                    edit.setChatId("-1003536873919");
+                    edit.setChatId("-1003235201523");
                     edit.setMessageId(fresh.getChannelMessageId());
                     edit.setReplyMarkup(keyboard);
 
@@ -848,7 +818,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                 case REJECTED -> {
                     // ✅ меняем текст и убираем кнопки
                     EditMessageText edit = new EditMessageText();
-                    edit.setChatId("-1003536873919");
+                    edit.setChatId("-1003235201523");
                     edit.setMessageId(fresh.getChannelMessageId());
                     edit.setText(buildGroupText(fresh));
                     edit.setReplyMarkup(null);
@@ -882,18 +852,19 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
     // ===================== FILE =====================
 
-    private void sendContestFile(Long chatId) {
-        UUID erezheDocId = UUID.fromString("ac29733a-f800-48da-a058-ef2de3b1a43c");
+    private void sendContestFile(Long chatId ) {
+        Long contestId = selectedContest.get(chatId);
+        Contests contest = contestsService.getById(contestId);
+        UUID erezheDocId = UUID.fromString(contest.getFileUrl());
         var erezheBytes = fileService.downloadFileBytes(erezheDocId);
         if (erezheBytes != null) {
             try (InputStream erezheStream = new ByteArrayInputStream(erezheBytes)) {
                 execute(new SendDocument(chatId.toString(),
-                        new InputFile(erezheStream, "makataev_rules.docx")));
+                        new InputFile(erezheStream, "rules.docx")));
                 return;
             } catch (Exception e) {
                 log.error("File send error", e);
             }
-
         }
     }
 
@@ -902,12 +873,10 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
     private void sendWelcomeMessage(Long chatId) {
         SendMessage msg = new SendMessage(chatId.toString(),
-                "Сәлеметсіз бе! " +
-                        "\uD83C\uDFC6 Өтіп жатқан байкаулар:\n" +
-                        "\n" +
-                        " \uD83C\uDFA4  МАҚАТАЕВ ОҚУЛАРЫ \n" +
-                        "\n" +
-                        "Толықырақ білу үшін байқауды таңдаңыз:");
+                "Сәлеметсіз бе! \uD83D\uDC4B\n" +
+                        "Біздің онлайн байқау платформасына қош келдіңіз!\n" +
+                        "Белсенді байқауларды көру үшін төмендегі\n" +
+                        "«Байқаулар» батырмасын басыңыз.");
 
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
                 List.of(button("📋 Байқаулар", "active_contests"))
@@ -918,15 +887,23 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
     }
 
     private void showActiveContests(Long chatId, Integer messageId) {
+
+        List<Contests> contests = contestsService.getActiveKindergartenContests();
+
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+
+        for (Contests c : contests) {
+            buttons.add(List.of(
+                    button(c.getName(), "contest_details_" + c.getId())
+            ));
+        }
+
         EditMessageText msg = new EditMessageText();
         msg.setChatId(chatId.toString());
         msg.setMessageId(messageId);
         msg.setText("Байқаулар тізімі:");
 
-        msg.setReplyMarkup(new InlineKeyboardMarkup(List.of(
-                List.of(button("МАҚАТАЕВ ОҚУЛАРЫ", "contest_details_1"))
-        )));
-
+        msg.setReplyMarkup(new InlineKeyboardMarkup(buttons));
         executeEditMessage(msg);
     }
 
@@ -966,7 +943,8 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
     private String buildGroupText(ContestResult r) {
         return
-                "📢 Жаңа қатысушы\n\n" +
+                "🏆 Байқау: " + r.getContestName() + "\n\n" +
+                        "📢 Жаңа қатысушы\n\n" +
                         "ID: " + r.getId() + "\n" +
                         "👤 " + r.getFullName() + "\n" +
                         "🏫 " + r.getSchool() + "\n" +

@@ -24,4 +24,5 @@ public interface ContestsRepository extends JpaRepository<Contests, Long> {
             Contests.ContestsStatus status,
             List<ContestType> contestTypes
     );
+
 }

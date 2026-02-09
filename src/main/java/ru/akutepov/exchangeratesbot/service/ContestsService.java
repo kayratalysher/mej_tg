@@ -24,13 +24,17 @@ public class ContestsService {
         );
     }
 
-    // вариант если несколько школьных типов
-    public List<Contests> getAllActiveSchool() {
-        return contestsRepository.findAllByStatusAndContestTypeIn(
+    public List<Contests> getActiveKindergartenContests() {
+        return contestsRepository.findAllByStatusAndContestType(
                 Contests.ContestsStatus.ACTIVE,
-                List.of(
-                        ContestType.MEKTEP_MAKATAEV
-                )
+                ContestType.BALABAKSHA_MAKATAEV
+        );
+    }
+
+    public List<Contests> getActiveOthersContests() {
+        return contestsRepository.findAllByStatusAndContestType(
+                Contests.ContestsStatus.ACTIVE,
+                ContestType.OTHER
         );
     }
 
