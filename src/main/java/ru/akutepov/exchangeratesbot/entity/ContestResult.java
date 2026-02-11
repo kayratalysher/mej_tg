@@ -19,6 +19,7 @@ public class ContestResult {
     private Long id;
 
     private Long chatId;
+    private String contestName;       // конкурс аты
     private String fullName;     // Аты-жөні
     private String grade;        // Сыныбы
     private String phone;        // Ұялы телефон

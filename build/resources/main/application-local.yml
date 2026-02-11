@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://104.248.39.82:5432/mangilikel
+    url: jdbc:postgresql://localhost:15432/mangilikel
     username: mangilikel
     password: mangilikel
     driver-class-name: org.postgresql.Driver
@@ -9,7 +9,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
