@@ -31,10 +31,10 @@ public class ContestsService {
         );
     }
 
-    public List<Contests> getActiveOthersContests() {
+    public List<Contests> getActiveBOYAULARContests() {
         return contestsRepository.findAllByStatusAndContestType(
                 Contests.ContestsStatus.ACTIVE,
-                ContestType.OTHER
+                ContestType.BOYAULAR
         );
     }
 

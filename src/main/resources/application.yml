@@ -13,6 +13,10 @@ bots:
     token: 8341785063:AAEA7W8v5sM3b_Zw30atPgXtuK8h4XSvtaI
     username: mangilik_el_jastary_baqsha_bot
 
+  boyaular:
+    token: 8391729302:AAGCCyvEc31MRxdhxdzMO0a9SmOqjQIwDO8
+    username: boyaular_qupiiasy_bot
+
   test:
     token: 8392819757:AAHEqiK5rRJ45EyXGfm-fOc3CLs501cxlEY
     username: mangilik_el_jastary_bot
