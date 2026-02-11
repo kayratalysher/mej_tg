@@ -49,11 +49,11 @@
 //@Transactional
 //public class TestBot extends TelegramLongPollingBot {
 //
-//    @Value("mangilik_el_jastary_baqsha_bot")
+//    @Value("mangilik_el_jastary_bot")
 //    private String botUsername;
 //
-//    //@Value("8341785063:AAEA7W8v5sM3b_Zw30atPgXtuK8h4XSvtaI")
-//    @Value("${bots.baqsha.token:8341785063:AAEA7W8v5sM3b_Zw30atPgXtuK8h4XSvtaI}")
+//    @Value("8392819757:AAHEqiK5rRJ45EyXGfm-fOc3CLs501cxlEY")
+//    //@Value("${bots.baqsha.token:8341785063:AAEA7W8v5sM3b_Zw30atPgXtuK8h4XSvtaI}")
 //    private String botToken;
 //
 //    private final UsersRepositroy usersRepositroy;
@@ -205,6 +205,12 @@
 //            Long contestId = Long.parseLong(data.replace("contest_details_", ""));
 //            selectedContest.put(chatId, contestId);
 //            showContestDetails(chatId, messageId, contestId.intValue());
+//            return;
+//        }
+//
+//        if (data.startsWith("rules_")) {
+//            sendContestFile(chatId);
+//            answerCallbackQuery(callbackId);
 //            return;
 //        }
 //
@@ -514,7 +520,7 @@
 //    private void processUserInput(Long chatId, String text) {
 //        log.info("📝 processUserInput | chatId={}, text={}", chatId, text);
 //        ContestResult result = tempResults.get(chatId);
-//        result.setContestType(ContestType.BALABAKSHA);
+//        result.setContestType(ContestType.MEKTEP_MAKATAEV);
 //        Integer step = userStep.get(chatId);
 //
 //        if (result == null || step == null) {
@@ -743,7 +749,7 @@
 //        List<ContestResult> list =
 //                contestResultRepository.findAllByStatusAndContestTypeAndCertificateNotifyAtBefore(
 //                        ParticipantStatus.AWAITING_CHECK,
-//                        ContestType.BALABAKSHA,
+//                        ContestType.MEKTEP_MAKATAEV,
 //                        LocalDateTime.now()
 //                );
 //
@@ -888,8 +894,8 @@
 //
 //    private void showActiveContests(Long chatId, Integer messageId) {
 //
-//        List<Contests> contests = contestsService.getActiveKindergartenContests();
-//
+//        //List<Contests> contests = contestsService.getActiveKindergartenContests();
+//        List<Contests> contests = contestsService.getActiveSchoolContests();
 //        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
 //
 //        for (Contests c : contests) {

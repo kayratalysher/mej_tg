@@ -208,6 +208,12 @@ public class TelegramBotService extends TelegramLongPollingBot {
             return;
         }
 
+        if (data.startsWith("rules_")) {
+            sendContestFile(chatId);
+            answerCallbackQuery(callbackId);
+            return;
+        }
+
         if (data.startsWith("payment_ok_")) {
             log.info("💳 Payment OK callback | data={}", data);
             showDiplomaButtons(chatId, messageId, data);
