@@ -11,7 +11,9 @@ java {
         languageVersion = JavaLanguageVersion.of(17)
     }
 }
-
+tasks.named('bootRun') {
+    systemProperty 'user.timezone', 'Asia/Almaty'
+}
 repositories {
     mavenCentral()
 }
@@ -37,7 +39,7 @@ dependencies {
     implementation 'com.google.zxing:core:3.5.2'
     implementation 'com.google.zxing:javase:3.5.2'
     testImplementation 'org.springframework:spring-test:6.0.6'
-
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
 
     // Telegram Bot
     implementation 'org.telegram:telegrambots:6.8.0'

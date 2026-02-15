@@ -3,6 +3,12 @@ logging:
     org.telegram: debug
     root: info
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 
 bots:
   mektep:

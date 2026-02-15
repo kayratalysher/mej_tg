@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.akutepov.exchangeratesbot.diplom.enums.DiplomTemplates;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,6 +28,10 @@ public class Contests {
     private ContestsStatus status;
     @Enumerated(EnumType.STRING)
     private ContestType contestType;
+    @Enumerated(EnumType.STRING)
+    private DiplomTemplates diplomTemplate;
+    @Enumerated(EnumType.STRING)
+    private DiplomTemplates algysTemplate;
     public enum ContestsStatus {
         ACTIVE,
         INACTIVE;

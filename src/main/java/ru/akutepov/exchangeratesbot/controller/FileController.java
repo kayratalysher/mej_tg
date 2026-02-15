@@ -1,5 +1,6 @@
 package ru.akutepov.exchangeratesbot.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import ru.akutepov.exchangeratesbot.service.FileService;
 import java.util.List;
 import java.util.UUID;
 
+@Hidden
 @RestController
 @RequestMapping("/api/v1/files")
 @RequiredArgsConstructor

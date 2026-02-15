@@ -373,12 +373,14 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         };
     }
 
-    private void fetchAndSendCertificate(ContestResult r) {
+    @Transactional
+    public void fetchAndSendCertificate(ContestResult r) {
         log.info("📜 fetchAndSendCertificate | resultId={}, chatId={}", r.getId(), r.getChatId());
         try {
-            log.info("🔽 Downloading diploma | fullName={}, mentor={}, category={}",
-                    r.getFullName(), r.getMentor(), r.getDiplomaCategory());
-            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),r.getMentor(), DiplomTemplates.MUKAGALI_SCHOOL,r.getDiplomaCategory());
+            var contest = r.getContest();
+            log.info("🔽 Downloading diploma | fullName={}, mentor={}, category={},contest={}",
+                    r.getFullName(), r.getMentor(), r.getDiplomaCategory(),contest.getName());
+            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),r.getMentor(), contest.getDiplomTemplate(),r.getDiplomaCategory());
 
             if (diplomaBytes == null || diplomaBytes.length == 0) {
                 log.error("❌ Diploma bytes are empty | resultId={}", r.getId());
@@ -395,24 +397,27 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
             ));
             log.info("✅ Diploma sent successfully | resultId={}", r.getId());
 
-            //диплом руководителю
-            log.info("🔽 Downloading algys diploma for mentor | mentor={}", r.getMentor());
-            byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.ALGYS_SCHOOL);
+            if (contest.getAlgysTemplate()!=null){
+                //диплом руководителю
+                log.info("🔽 Downloading algys diploma for mentor | mentor={}", r.getMentor());
+                byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.ALGYS_SCHOOL);
 
-            if (diplomaBytesHead == null || diplomaBytesHead.length == 0) {
-                log.error("❌ Algys diploma bytes are empty | resultId={}", r.getId());
-                throw new RuntimeException("Диплом пришёл пустой");
+                if (diplomaBytesHead == null || diplomaBytesHead.length == 0) {
+                    log.error("❌ Algys diploma bytes are empty | resultId={}", r.getId());
+                    throw new RuntimeException("Диплом пришёл пустой");
+                }
+                log.info("✅ Algys diploma downloaded | size={} bytes", diplomaBytesHead.length);
+
+                InputStream certificateStreamHead = new ByteArrayInputStream(diplomaBytesHead);
+
+                log.info("📤 Sending algys diploma to user | chatId={}", r.getChatId());
+                execute(new SendDocument(
+                        r.getChatId().toString(),
+                        new InputFile(certificateStreamHead, "algys_xat.pdf")
+                ));
+                log.info("✅ Algys diploma sent successfully | resultId={}", r.getId());
+
             }
-            log.info("✅ Algys diploma downloaded | size={} bytes", diplomaBytesHead.length);
-
-            InputStream certificateStreamHead = new ByteArrayInputStream(diplomaBytesHead);
-
-            log.info("📤 Sending algys diploma to user | chatId={}", r.getChatId());
-            execute(new SendDocument(
-                    r.getChatId().toString(),
-                    new InputFile(certificateStreamHead, "algys_xat.pdf")
-            ));
-            log.info("✅ Algys diploma sent successfully | resultId={}", r.getId());
 
             sendText(r.getChatId(), "📜 Диплом дайын!");
 
