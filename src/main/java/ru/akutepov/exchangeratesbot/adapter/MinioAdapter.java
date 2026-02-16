@@ -3,9 +3,7 @@ package ru.akutepov.exchangeratesbot.adapter;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,7 +24,7 @@ public class MinioAdapter {
         this.minioClient = minioClient;
     }
 
-    public void uploadFileVideo(InputStream fileStream, long size, String fileName,String contentType) {
+    public void uploadFileVideo(InputStream fileStream, long size, String fileName, String contentType) {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -88,7 +86,6 @@ public class MinioAdapter {
 
     public void uploadFile(MultipartFile file, String filename, UUID objectId, String objectType) {
         try (InputStream inputStream = file.getInputStream()) {
-
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucket)

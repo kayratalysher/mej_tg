@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.akutepov.exchangeratesbot.diplom.DiplomStrategy;
 import ru.akutepov.exchangeratesbot.diplom.enums.DiplomTemplates;
+//import ru.akutepov.exchangeratesbot.service.TelegramBotService;
+//import ru.akutepov.exchangeratesbot.service.TelegramBotServiceKindergarten;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +21,18 @@ import java.util.Map;
 @Slf4j
 public class DiplomController {
     private final DiplomStrategy diplomStrategy;
+//    private final TelegramBotServiceKindergarten telegramBotServiceKindergarten;
+//    private final TelegramBotService telegramBotService;
+
+//    @GetMapping("/kindergarten/change-status")
+//    public void changeStatus(@RequestParam Long id){
+//        telegramBotServiceKindergarten.changeStatusToPaidPending(id);
+//    }
+//
+//    @GetMapping("/school/change-status")
+//    public void changeStatusSchool(@RequestParam Long id){
+//        telegramBotService.changeStatusToPaidPending(id);
+//    }
 
     @GetMapping("/generate")
     public ResponseEntity<byte[]> generateDiplom(

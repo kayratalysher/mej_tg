@@ -16,3 +16,9 @@ spring:
         format_sql: true
         bytecode:
           provider: bytebuddy   # ← ВОТ ОНО, ГЛАВНОЕ
+
+minio:
+  url: ${MINIO_URL:http://minio:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  access-secret: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket-name: ${MINIO_BUCKET:mangilikel}
