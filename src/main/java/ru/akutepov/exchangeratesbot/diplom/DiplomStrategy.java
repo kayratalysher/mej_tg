@@ -56,6 +56,9 @@ public class DiplomStrategy {
         if (DiplomTemplates.ALGYS_SCHOOL.equals(type) || DiplomTemplates.ALGYS_BALSABAKSHA.equals(type)) {
             return schoolGenerate.generateAndSaveAlgys(jetekshi,type,false);
         }
+        if (DiplomTemplates.BOYAULAR_ALGYS.equals(type)) {
+            return schoolGenerate.generateAndSaveBoyaularAlgys(null,jetekshi,type,null,false);
+        }
 
         return null;
     }
