@@ -533,7 +533,7 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
                 log.info("👤 Saving fullName | chatId={}", chatId);
                 result.setFullName(text);
                 userStep.put(chatId, 2);
-                sendText(chatId, "Сыныбыңыз:");
+                sendText(chatId, "Тобыңыз:");
             }
             case 2 -> {
                 log.info("🎓 Saving grade | chatId={}", chatId);
@@ -551,7 +551,7 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
                 log.info("👨‍🏫 Saving mentor | chatId={}", chatId);
                 result.setMentor(text);
                 userStep.put(chatId, 5);
-                sendText(chatId, "Мектеп:");
+                sendText(chatId, "Ұйымның атауы:");
             }
             case 5 -> {
                 log.info("🏫 Saving school | chatId={}", chatId);
@@ -717,12 +717,12 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
                 if (isTooBigForBotApi) {
                     sendText(chatId, "✔ Жұмысыңыз қабылданды! (Файл өте үлкен - file_id сақталды)\n📜 Сертификат 2–3 сағат ішінде дайын болады.");
                 } else {
-                    sendText(chatId, "✔ Жұмысыңыз қабылданды!\n📜 Сертификат 2–3 сағат ішінде дайын болады.");
+                    sendText(chatId, "✔ Жұмысыңыз қабылданды!\n📜 Сертификат 1 сағат ішінде дайын болады.");
                 }
 
                 saved.setStatus(ParticipantStatus.AWAITING_CHECK);
-                saved.setCertificateNotifyAt(LocalDateTime.now().plusHours(2));
-                //saved.setCertificateNotifyAt(LocalDateTime.now().plusMinutes(2));
+                //saved.setCertificateNotifyAt(LocalDateTime.now().plusHours(2));
+                saved.setCertificateNotifyAt(LocalDateTime.now().plusMinutes(30));
                 contestResultRepository.save(saved);
                 log.info("🔄 Status changed to AWAITING_CHECK | id={}, notifyAt={}", saved.getId(), saved.getCertificateNotifyAt());
 
@@ -761,12 +761,14 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
     }
 
     private void sendCertificateMessage(ContestResult r) {
+        Long contestId = selectedContest.get(r.getChatId());
+        Contests contest = contestsService.getById(contestId);
 
         SendMessage msg = new SendMessage();
         msg.setChatId(r.getChatId().toString());
         msg.setText(
                 "📜ДИПЛОМ мен АЛҒЫС ХАТЫҢЫЗ дайын✅\n\n" +
-                        "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы 1900 теңге.\n" +
+                        "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы " + contest.getPrice() +" теңге.\n" +
                         "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
                         " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
                         "🟥🟥🟥 ЕСКЕРТУ 🟥🟥🟥\n" +
