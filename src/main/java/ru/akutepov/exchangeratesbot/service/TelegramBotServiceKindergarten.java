@@ -430,7 +430,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
             if (r.getChannelMessageId() != null) {
                 log.info("📝 Updating channel message | channelMessageId={}", r.getChannelMessageId());
                 EditMessageText edit = new EditMessageText();
-                edit.setChatId("-1003235201523");
+                edit.setChatId("-1003536873919");
                 edit.setMessageId(r.getChannelMessageId());
                 edit.setText(buildGroupText(r));
                 edit.setReplyMarkup(null);
@@ -448,7 +448,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         log.info("🧪 testChannel | Testing channel message sending");
         try {
             Message m = execute(
-                    new SendMessage("-1003235201523", "TEST CHANNEL MESSAGE")
+                    new SendMessage("-1003536873919", "TEST CHANNEL MESSAGE")
             );
             log.info("✅ TEST SENT successfully | messageId={}", m.getMessageId());
         } catch (Exception e) {
@@ -681,14 +681,14 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                         fileInfo += "\n⚠️ Файл НЕ загружен в MinIO (недоступен для Bot API)";
                     }
 
-                    SendMessage bigFileMsg = new SendMessage("-1003235201523", fileInfo);
+                    SendMessage bigFileMsg = new SendMessage("-1003536873919", fileInfo);
                     execute(bigFileMsg);
                     log.info("✅ Large file info sent to channel");
 
                 } else if (shouldUploadToMinio && minioUrl != null) {
                     // Видео загружено в MinIO
                     log.info("📤 Sending MinIO link to channel | savedId={}, minioUrl={}", saved.getId(), minioUrl);
-                    SendMessage minioMsg = new SendMessage("-1003235201523",
+                    SendMessage minioMsg = new SendMessage("-1003536873919",
                             "🎥 Видео файл (большой размер)\n" +
                                     "📁 Файл: " + savedFileName + "\n" +
                                     "💾 Размер: " + (fileSize / (1024 * 1024)) + " МБ\n" +
@@ -700,7 +700,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                     // Обычный файл - отправляем напрямую
                     log.info("📤 Sending file to channel | savedId={}", saved.getId());
                     SendDocument sendDoc = new SendDocument();
-                    sendDoc.setChatId("-1003235201523");
+                    sendDoc.setChatId("-1003536873919");
                     sendDoc.setDocument(new InputFile(new java.net.URL(fileUrl).openStream(), savedFileName));
                     execute(sendDoc);
                     log.info("✅ File sent to channel successfully");
@@ -708,7 +708,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
 
                 // 🔹 Отправка отдельного текстового сообщения с кнопками
                 log.info("📤 Sending info message to channel | savedId={}", saved.getId());
-                SendMessage msg = new SendMessage("-1003235201523", buildGroupText(saved));
+                SendMessage msg = new SendMessage("-1003536873919", buildGroupText(saved));
                 Message textMessage = execute(msg);
                 log.info("✅ Info message sent | channelMessageId={}", textMessage.getMessageId());
 
@@ -767,6 +767,10 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
     }
 
     private void sendCertificateMessage(ContestResult r) {
+        if (r.getCertificateNotifyAt().isAfter(LocalDateTime.now())) {
+            return;
+        }
+
         Long contestId = selectedContest.get(r.getChatId());
         Contests contest = contestsService.getById(contestId);
 
@@ -820,7 +824,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                     ));
 
                     EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
-                    edit.setChatId("-1003235201523");
+                    edit.setChatId("-1003536873919");
                     edit.setMessageId(fresh.getChannelMessageId());
                     edit.setReplyMarkup(keyboard);
 
@@ -831,7 +835,7 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
                 case REJECTED -> {
                     // ✅ меняем текст и убираем кнопки
                     EditMessageText edit = new EditMessageText();
-                    edit.setChatId("-1003235201523");
+                    edit.setChatId("-1003536873919");
                     edit.setMessageId(fresh.getChannelMessageId());
                     edit.setText(buildGroupText(fresh));
                     edit.setReplyMarkup(null);
