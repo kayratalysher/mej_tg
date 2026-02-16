@@ -24,6 +24,15 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 
+//public class TelegramBotService extends TelegramLongPollingBot {
+//
+//    @Value("mangilik_el_jastary_mektep_bot")
+//    private String botUsername;
+//
+//    //@Value("8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM")
+//    @Value("${bots.mektep.token:8584001024:AAG_nL0hK4LYTUZdrVAUeqdH604boqmk5CM}")
+//    private String botToken;
+
 @Service
 @RequiredArgsConstructor
 public class FileService {

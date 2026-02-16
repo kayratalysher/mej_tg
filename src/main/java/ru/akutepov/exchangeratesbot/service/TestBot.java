@@ -373,12 +373,14 @@
 //        };
 //    }
 //
-//    private void fetchAndSendCertificate(ContestResult r) {
+//    @Transactional
+//    public void fetchAndSendCertificate(ContestResult r) {
 //        log.info("📜 fetchAndSendCertificate | resultId={}, chatId={}", r.getId(), r.getChatId());
 //        try {
+//            var contest=r.getContest();
 //            log.info("🔽 Downloading diploma | fullName={}, mentor={}, category={}",
 //                    r.getFullName(), r.getMentor(), r.getDiplomaCategory());
-//            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),r.getMentor(), DiplomTemplates.MUKAGALI_SCHOOL,r.getDiplomaCategory());
+//            byte[] diplomaBytes = diplomGenerateAdapter.downloadDiploma(r.getFullName(),r.getMentor(),contest.getDiplomTemplate(), r.getDiplomaCategory());
 //
 //            if (diplomaBytes == null || diplomaBytes.length == 0) {
 //                log.error("❌ Diploma bytes are empty | resultId={}", r.getId());
@@ -395,24 +397,27 @@
 //            ));
 //            log.info("✅ Diploma sent successfully | resultId={}", r.getId());
 //
-//            //диплом руководителю
-//            log.info("🔽 Downloading algys diploma for mentor | mentor={}", r.getMentor());
-//            byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.ALGYS_SCHOOL);
+//            if (contest.getAlgysTemplate()!=null){
+//                //диплом руководителю
+//                log.info("🔽 Downloading algys diploma for mentor | mentor={}", r.getMentor());
+//                byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.ALGYS_SCHOOL);
 //
-//            if (diplomaBytesHead == null || diplomaBytesHead.length == 0) {
-//                log.error("❌ Algys diploma bytes are empty | resultId={}", r.getId());
-//                throw new RuntimeException("Диплом пришёл пустой");
+//                if (diplomaBytesHead == null || diplomaBytesHead.length == 0) {
+//                    log.error("❌ Algys diploma bytes are empty | resultId={}", r.getId());
+//                    throw new RuntimeException("Диплом пришёл пустой");
+//                }
+//                log.info("✅ Algys diploma downloaded | size={} bytes", diplomaBytesHead.length);
+//
+//                InputStream certificateStreamHead = new ByteArrayInputStream(diplomaBytesHead);
+//
+//                log.info("📤 Sending algys diploma to user | chatId={}", r.getChatId());
+//                execute(new SendDocument(
+//                        r.getChatId().toString(),
+//                        new InputFile(certificateStreamHead, "algys_xat.pdf")
+//                ));
+//                log.info("✅ Algys diploma sent successfully | resultId={}", r.getId());
 //            }
-//            log.info("✅ Algys diploma downloaded | size={} bytes", diplomaBytesHead.length);
 //
-//            InputStream certificateStreamHead = new ByteArrayInputStream(diplomaBytesHead);
-//
-//            log.info("📤 Sending algys diploma to user | chatId={}", r.getChatId());
-//            execute(new SendDocument(
-//                    r.getChatId().toString(),
-//                    new InputFile(certificateStreamHead, "algys_xat.pdf")
-//            ));
-//            log.info("✅ Algys diploma sent successfully | resultId={}", r.getId());
 //
 //            sendText(r.getChatId(), "📜 Диплом дайын!");
 //
@@ -514,7 +519,7 @@
 //        r.setContestName(contest.getName());   // <-- ВОТ ТУТ
 //        log.info("📝 Registration flow started | chatId={}, step=1", chatId);
 //        tempResults.put(chatId, r);
-//         sendText(chatId, "Қатысушының аты-жөні");
+//        sendText(chatId, "Қатысушының аты-жөні");
 //    }
 //
 //    private void processUserInput(Long chatId, String text) {
@@ -746,28 +751,39 @@
 //
 //    @Scheduled(fixedDelay = 60000)
 //    public void certificateJob() {
-//        List<ContestResult> list =
-//                contestResultRepository.findAllByStatusAndContestTypeAndCertificateNotifyAtBefore(
-//                        ParticipantStatus.AWAITING_CHECK,
-//                        ContestType.MEKTEP_MAKATAEV,
-//                        LocalDateTime.now()
-//                );
-//
-//        for (ContestResult r : list) {
-//            sendCertificateMessage(r);
-//            r.setStatus(ParticipantStatus.WANT_TO_BUY);
-//            contestResultRepository.save(r);
-//            log.info("⏰ CERTIFICATE JOB | resultId={} status=WANT_TO_BUY", r.getId());
+//        try {
+//            List<ContestResult> list =
+//                    contestResultRepository.findAllByStatusAndContestTypeAndCertificateNotifyAtBefore(
+//                            ParticipantStatus.AWAITING_CHECK,
+//                            ContestType.MEKTEP_MAKATAEV,
+//                            LocalDateTime.now()
+//                    );
+//            log.info("⏰ Certificate job found {} results to notify", list.size());
+//            for (ContestResult r : list) {
+//                sendCertificateMessage(r);
+//                r.setStatus(ParticipantStatus.WANT_TO_BUY);
+//                contestResultRepository.save(r);
+//                log.info("⏰ CERTIFICATE JOB | resultId={} status=WANT_TO_BUY", r.getId());
+//            }
+//        }catch (Exception e){
+//            log.error("❌ Certificate job error", e);
 //        }
+//
 //    }
 //
 //    private void sendCertificateMessage(ContestResult r) {
+//        if (r.getCertificateNotifyAt().isAfter(LocalDateTime.now())) {
+//            return;
+//        }
+//
+//        Long contestId = selectedContest.get(r.getChatId());
+//        Contests contest = contestsService.getById(contestId);
 //
 //        SendMessage msg = new SendMessage();
 //        msg.setChatId(r.getChatId().toString());
 //        msg.setText(
 //                "📜ДИПЛОМ мен АЛҒЫС ХАТЫҢЫЗ дайын✅\n\n" +
-//                        "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы 1900 теңге.\n" +
+//                        "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы " + contest.getPrice() +" теңге.\n" +
 //                        "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
 //                        " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
 //                        "🟥🟥🟥 ЕСКЕРТУ 🟥🟥🟥\n" +
@@ -894,8 +910,8 @@
 //
 //    private void showActiveContests(Long chatId, Integer messageId) {
 //
-//        //List<Contests> contests = contestsService.getActiveKindergartenContests();
 //        List<Contests> contests = contestsService.getActiveSchoolContests();
+//
 //        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
 //
 //        for (Contests c : contests) {
