@@ -55,6 +55,7 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
     @Value("8391729302:AAGCCyvEc31MRxdhxdzMO0a9SmOqjQIwDO8")
     private String botToken;
 
+
     private final UsersRepositroy usersRepositroy;
     private final ContestResultRepository contestResultRepository;
     private final DiplomGenerateAdapter diplomGenerateAdapter;
@@ -219,12 +220,7 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
             return;
         }
 
-        if (data.startsWith("payment_failed_")) {
-            Long id = Long.parseLong(data.replace("payment_failed_", ""));
-            log.info("❌ Payment failed callback | id={}", id);
-            handlePaymentFailed(id);
-            return;
-        }
+
         answerCallbackQuery(callbackId);
 
         log.info("🎯 Processing callback data: {}", data);
@@ -253,91 +249,8 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
             return; // больше ничего не делаем для этого колбэка
         }
 
-        if (data.startsWith("certificate_paid_")) {
-            Long id = Long.parseLong(data.replace("certificate_paid_", ""));
-            log.info("✅ Certificate paid callback | id={}", id);
-            handleCertificatePaidById(id);
-            return;
-        }
-
-        if (data.startsWith("certificate_reject_")) {
-            Long id = Long.parseLong(data.replace("certificate_reject_", ""));
-            log.info("🚫 Certificate reject callback | id={}", id);
-            handleRejectById(id);
-            return;
-        }
     }
 
-    private void handlePaymentFailed(Long id) {
-        log.info("💔 handlePaymentFailed | id={}", id);
-        ContestResult r = contestResultRepository.findById(id).orElse(null);
-        if (r == null) {
-            log.warn("⚠️ ContestResult not found | id={}", id);
-            return;
-        }
-
-        log.info("🔄 Changing status to REJECTED | id={}", id);
-        // меняем статус (можно REJECTED или новый)
-        r.setStatus(ParticipantStatus.REJECTED);
-        contestResultRepository.save(r);
-
-        // обновляем сообщение в группе (убираем кнопки)
-        log.info("📝 Updating group message | id={}", id);
-        updateGroupMessage(r);
-
-        // ❗ сообщение пользователю
-        log.info("📨 Sending payment failed message to user | chatId={}", r.getChatId());
-        sendText(
-                r.getChatId(),
-                "❌ Төлем өтпеді.\n\n" +
-                        "Мүмкін қате болды немесе төлем расталмады.\n" +
-                        "Қайта төлем жасап көріңіз немесе администраторға хабарласыңыз 🙏"
-        );
-        log.info("✅ Payment failed handled | id={}", id);
-    }
-
-
-    private void handleCertificatePaidById(Long id) {
-        log.info("💰 handleCertificatePaidById | id={}", id);
-        ContestResult r = contestResultRepository.findById(id).orElse(null);
-        if (r == null) {
-            log.warn("⚠️ ContestResult not found | id={}", id);
-            return;
-        }
-
-        log.info("🔄 Changing status to PAID_PENDING | id={}", id);
-        r.setStatus(ParticipantStatus.PAID_PENDING);
-        contestResultRepository.save(r);
-
-        log.info("📝 Updating group message | id={}", id);
-        updateGroupMessage(r);
-
-        log.info("📨 Sending confirmation message to user | chatId={}", r.getChatId());
-        sendText(r.getChatId(),
-                "⏳ Төлем қабылданды.\n" +
-                        "Тексерілген соң сертификат жіберіледі 📜");
-        log.info("✅ Certificate paid handled | id={}", id);
-    }
-
-    private void handleRejectById(Long id) {
-        log.info("🚫 handleRejectById | id={}", id);
-        ContestResult r = contestResultRepository.findById(id).orElse(null);
-        if (r == null) {
-            log.warn("⚠️ ContestResult not found | id={}", id);
-            return;
-        }
-
-        log.info("🔄 Changing status to REJECTED | id={}", id);
-        r.setStatus(ParticipantStatus.REJECTED);
-        contestResultRepository.save(r);
-
-        log.info("📝 Updating group message | id={}", id);
-        updateGroupMessage(r);
-
-        log.info("📨 Sending rejection confirmation to user | chatId={}", r.getChatId());
-        sendText(r.getChatId(), "Жарайды 👍 Егер ойыңыз өзгерсе — хабарласыңыз");
-        log.info("✅ Rejection handled | id={}", id);
-    }
 
     private void handleSetDiploma(String data) {
         log.info("🎓 handleSetDiploma | data={}", data);
@@ -394,7 +307,7 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
             ));
             log.info("✅ Diploma sent successfully | resultId={}", r.getId());
 
-           // диплом руководителю
+            // диплом руководителю
             log.info("🔽 Downloading algys diploma for mentor | mentor={}", r.getMentor());
             byte[] diplomaBytesHead = diplomGenerateAdapter.downloadDiplomAlgis(r.getMentor(),DiplomTemplates.BOYAULAR_ALGYS);
 
@@ -513,7 +426,7 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
         r.setContestName(contest.getName());   // <-- ВОТ ТУТ
         log.info("📝 Registration flow started | chatId={}, step=1", chatId);
         tempResults.put(chatId, r);
-         sendText(chatId, "Қатысушының аты-жөні");
+        sendText(chatId, "Қатысушының аты-жөні");
     }
 
     private void processUserInput(Long chatId, String text) {
@@ -722,7 +635,7 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
 
                 saved.setStatus(ParticipantStatus.AWAITING_CHECK);
                 //saved.setCertificateNotifyAt(LocalDateTime.now().plusHours(2));
-                saved.setCertificateNotifyAt(LocalDateTime.now().plusMinutes(30));
+                saved.setCertificateNotifyAt(LocalDateTime.now().plusMinutes(2));
                 contestResultRepository.save(saved);
                 log.info("🔄 Status changed to AWAITING_CHECK | id={}, notifyAt={}", saved.getId(), saved.getCertificateNotifyAt());
 
@@ -739,7 +652,6 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
             log.warn("⚠️ File sent at wrong step | chatId={}, step={}", chatId, step);
         }
 
-        sendCertificateMessage(result);
     }
 
 
@@ -753,98 +665,35 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
                 );
 
         for (ContestResult r : list) {
-            sendCertificateMessage(r);
-            r.setStatus(ParticipantStatus.WANT_TO_BUY);
+            sendDiplomaButtonsToGroup(r);
+            r.setStatus(ParticipantStatus.APPROVED); // или отдельный статус типа READY_FOR_DIPLOMA
             contestResultRepository.save(r);
-            log.info("⏰ CERTIFICATE JOB | resultId={} status=WANT_TO_BUY", r.getId());
+            log.info("🎓 DIPLOMA READY | resultId={}", r.getId());
         }
     }
 
-    private void sendCertificateMessage(ContestResult r) {
-        if (r.getCertificateNotifyAt().isAfter(LocalDateTime.now())) {
-            return;
-        }
-        Long contestId = selectedContest.get(r.getChatId());
-        Contests contest = contestsService.getById(contestId);
-
-        SendMessage msg = new SendMessage();
-        msg.setChatId(r.getChatId().toString());
-        msg.setText(
-                "📜ДИПЛОМ мен АЛҒЫС ХАТЫҢЫЗ дайын✅\n\n" +
-                        "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы " + contest.getPrice() +" теңге.\n" +
-                        "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
-                        " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
-                        "🟥🟥🟥 ЕСКЕРТУ 🟥🟥🟥\n" +
-                        "Төлем жасағанда каспи-комментариге М" + r.getId() + " жіберуіңізді сұраймыз 👇"
-        );
-        //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
-        String payUrl = "https://pay.kaspi.kz/pay/v0iq41rc";
-        //tring payUrl = "https://pay.kaspi.kz/pay/v0iq41rc?comment=M" + r.getId();
+    private void sendDiplomaButtonsToGroup(ContestResult r) {
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
-                List.of(payUrlButton("💳 Сертификатты төлеу", payUrl)),
-                List.of(callbackButton(
-                        "✅ Сертификат төленді",
-                        "certificate_paid_" + r.getId()
-                )),
-                List.of(callbackButton(
-                        "❌ Бас тарту",
-                        "certificate_reject_" + r.getId()
-                ))
+                List.of(button("🥇 1 дәрежелі", "set_diploma_1_" + r.getId())),
+                List.of(button("🥈 2 дәрежелі", "set_diploma_2_" + r.getId())),
+                List.of(button("🥉 3 дәрежелі", "set_diploma_3_" + r.getId()))
         ));
 
+        SendMessage msg = new SendMessage();
+        msg.setChatId("-1003665098806");
+        msg.setText(buildGroupText(r));
         msg.setReplyMarkup(keyboard);
-        executeMessage(msg);
-    }
-
-    private void updateGroupMessage(ContestResult r) {
-        if (r == null || r.getId() == null) return;
-
-        ContestResult fresh = contestResultRepository.findById(r.getId()).orElse(null);
-        if (fresh == null || fresh.getChannelMessageId() == null) return;
-
-        log.info("⚠ updateGroupMessage: channelMessageId={}", fresh.getChannelMessageId());
 
         try {
-            switch (fresh.getStatus()) {
-
-                case PAID_PENDING -> {
-                    // ✅ меняем ТОЛЬКО кнопки
-                    InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup(List.of(
-                            List.of(
-                                    button("💳 Оплата прошла", "payment_ok_" + fresh.getId()),
-                                    button("❌ Оплата не прошла", "payment_failed_" + fresh.getId())
-                            )
-                    ));
-
-                    EditMessageReplyMarkup edit = new EditMessageReplyMarkup();
-                    edit.setChatId("-1003665098806");
-                    edit.setMessageId(fresh.getChannelMessageId());
-                    edit.setReplyMarkup(keyboard);
-
-                    execute(edit);
-                    log.info("✅ GROUP KEYBOARD UPDATED (PAID_PENDING)");
-                }
-
-                case REJECTED -> {
-                    // ✅ меняем текст и убираем кнопки
-                    EditMessageText edit = new EditMessageText();
-                    edit.setChatId("-1003665098806");
-                    edit.setMessageId(fresh.getChannelMessageId());
-                    edit.setText(buildGroupText(fresh));
-                    edit.setReplyMarkup(null);
-
-                    execute(edit);
-                    log.info("✅ GROUP MESSAGE UPDATED (REJECTED)");
-                }
-
-                default -> {
-                    // ничего не делаем
-                }
-            }
+            Message m = execute(msg);
+            r.setChannelMessageId(m.getMessageId());
+            contestResultRepository.save(r);
         } catch (Exception e) {
-            log.error("❌ updateGroupMessage FAILED", e);
+            log.error("❌ Failed to send diploma buttons", e);
         }
     }
+
+
 
     private InlineKeyboardButton payUrlButton(String text, String url) {
         InlineKeyboardButton b = new InlineKeyboardButton(text);
