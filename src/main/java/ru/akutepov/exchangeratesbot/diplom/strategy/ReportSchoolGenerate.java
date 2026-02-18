@@ -502,14 +502,14 @@ public class ReportSchoolGenerate {
             PDPage page = document.getPage(0);
             float pageHeight = page.getMediaBox().getHeight();
 
-            InputStream fontStream = new ClassPathResource("files/font.ttf").getInputStream();
+            InputStream fontStream = new ClassPathResource("files/caveat.ttf").getInputStream();
             PDType0Font font = PDType0Font.load(document, fontStream);
 
             PDPageContentStream contentStream = new PDPageContentStream(document, page,
                     PDPageContentStream.AppendMode.APPEND, true, true);
 
             // --- ФИО ---
-            writeText(contentStream, font, config.fioFontSize, fullName,
+            writeText(contentStream, font, 120, fullName,
                     1444f, pageHeight - 1130f, config.colorFio, debugDrawPoints);
 
             // --- Номер диплома ---

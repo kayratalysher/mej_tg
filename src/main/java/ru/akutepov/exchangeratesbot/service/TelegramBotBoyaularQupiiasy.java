@@ -518,14 +518,19 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
 
     private void processUserInput(Long chatId, String text) {
         log.info("📝 processUserInput | chatId={}, text={}", chatId, text);
+
         ContestResult result = tempResults.get(chatId);
-        result.setContestType(ContestType.BOYAULAR);
         Integer step = userStep.get(chatId);
 
         if (result == null || step == null) {
             log.warn("⚠️ Result or step is null | chatId={}", chatId);
+            // Очистка потенциально устаревшего состояния, чтобы избежать зацикливания на /start и т.д.
+            userStep.remove(chatId);
+            tempResults.remove(chatId);
             return;
         }
+
+        result.setContestType(ContestType.BOYAULAR);
 
         log.info("🔢 Processing step {} | chatId={}", step, chatId);
         switch (step) {
@@ -563,6 +568,11 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
             case 6 -> {
                 log.info("⚠️ User sent text instead of file | chatId={}", chatId);
                 sendText(chatId, "Жұмысыңызды жіберіңіз (файл түрінде):");
+            }
+            default -> {
+                log.warn("⚠️ Unknown step {} | chatId={}", step, chatId);
+                userStep.remove(chatId);
+                tempResults.remove(chatId);
             }
         }
     }
@@ -765,17 +775,30 @@ public class TelegramBotBoyaularQupiiasy extends TelegramLongPollingBot {
             return;
         }
         Long contestId = selectedContest.get(r.getChatId());
-        Contests contest = contestsService.getById(contestId);
+        Contests contest = null;
+
+        try {
+            if (contestId != null) {
+                contest = contestsService.getById(contestId);
+            }
+        } catch (Exception e) {
+            log.warn("Не удалось получить contest по selectedContest id={} : {}", contestId, e.getMessage());
+        }
+
+        if (contest == null && r.getContest() != null) {
+            contest = r.getContest();
+        }
+
+        if (contest == null) {
+            log.warn("Contest not found for resultId={}, chatId={}", r.getId(), r.getChatId());
+            return;
+        }
 
         SendMessage msg = new SendMessage();
         msg.setChatId(r.getChatId().toString());
         msg.setText(
                 "📜ДИПЛОМ мен АЛҒЫС ХАТЫҢЫЗ дайын✅\n\n" +
-                        "Жүктеп алу үшін төлем жасауыңыз керек. Төлем жарнасы " + contest.getPrice() +" теңге.\n" +
-                        "\uD83D\uDCCE Егер бір педагогтың жетекшілігімен 10 қатысушыдан артық тіркелетін болса, менеджерге хабарласыңыз!\n" +
-                        " Арнайы жеңілдік қарастырылған\uD83E\uDD73 \n" +
-                        "🟥🟥🟥 ЕСКЕРТУ 🟥🟥🟥\n" +
-                        "Төлем жасағанда каспи-комментариге М" + r.getId() + " жіберуіңізді сұраймыз 👇"
+                        "Жүктеп алу үшін ✅ Сертификат төленді батырмасын басыңыз"
         );
         //String payUrl = "https://pay.example.com/certificate?chatId=" + chatId;
         String payUrl = "https://pay.kaspi.kz/pay/v0iq41rc";

@@ -772,7 +772,24 @@ public class TelegramBotServiceKindergarten extends TelegramLongPollingBot {
         }
 
         Long contestId = selectedContest.get(r.getChatId());
-        Contests contest = contestsService.getById(contestId);
+        Contests contest = null;
+
+        try {
+            if (contestId != null) {
+                contest = contestsService.getById(contestId);
+            }
+        } catch (Exception e) {
+            log.warn("Не удалось получить contest по selectedContest id={} : {}", contestId, e.getMessage());
+        }
+
+        if (contest == null && r.getContest() != null) {
+            contest = r.getContest();
+        }
+
+        if (contest == null) {
+            log.warn("Contest not found for resultId={}, chatId={}", r.getId(), r.getChatId());
+            return;
+        }
 
         SendMessage msg = new SendMessage();
         msg.setChatId(r.getChatId().toString());
